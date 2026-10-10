@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18251f">
+<meta name="description" content="사업, 식단, 운동, 관계, 마인드를 매일 기록하고 성취율과 병목을 확인하는 개인 성장 대시보드">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<title>LIFE OS — 나의 성장 대시보드</title>
+<style>
+:root{--bg:#f4f6f2;--card:#fff;--ink:#18251f;--muted:#6e7b72;--line:#e2e8e0;--green:#236746;--mint:#e3f2e8;--gold:#f3c969;--red:#a4493d;--shadow:0 8px 24px rgba(24,37,31,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans KR",sans-serif;line-height:1.45}button,input,textarea,select{font:inherit}button{cursor:pointer}
+.app{max-width:760px;margin:0 auto;min-height:100dvh;padding:0 16px 100px}.top{padding:22px 2px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-weight:850;letter-spacing:-.06em;font-size:24px}.brand span{color:var(--green)}.date-chip{font-size:12px;color:var(--muted);background:#e8ede6;border-radius:999px;padding:7px 10px}
+.hero{background:var(--ink);color:white;border-radius:24px;padding:22px;position:relative;overflow:hidden}.eyebrow{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#b7d8c2;font-weight:800}.hero h1{font-size:25px;line-height:1.22;letter-spacing:-.04em;margin:7px 0 6px}.hero p{color:#c5d1c8;margin:0;font-size:13px}.hero-row{display:flex;align-items:center;gap:18px;margin-top:20px}.ring{width:82px;height:82px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--gold) var(--pct,0%),#425047 0);flex-shrink:0}.ring:before{content:"";grid-area:1/1;width:66px;height:66px;border-radius:50%;background:var(--ink)}.ring strong{grid-area:1/1;z-index:1;font-size:17px}.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}.hero-stat small{display:block;color:#b8c7bd;font-size:11px}.hero-stat strong{font-size:19px;display:block;margin-top:3px}.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;background:#e8ede6;border-radius:15px;padding:5px;margin:16px 0}.nav button{border:0;background:transparent;border-radius:11px;padding:11px 5px;color:var(--muted);font-weight:750;font-size:13px}.nav button.active{background:white;color:var(--ink);box-shadow:0 2px 8px #17271a0c}
+.section-head{display:flex;justify-content:space-between;align-items:end;margin:22px 2px 10px}.section-head h2{font-size:18px;letter-spacing:-.03em;margin:0}.section-head p{font-size:12px;color:var(--muted);margin:3px 0 0}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:11px;box-shadow:var(--shadow)}.category-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}.cat-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:var(--mint);font-size:18px}.category-title h3{font-size:15px;margin:0}.category-title p{font-size:11px;color:var(--muted);margin:2px 0 0}.task{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #edf0eb;font-size:14px}.task input[type=checkbox]{appearance:none;width:21px;height:21px;border:1.5px solid #cbd5cc;border-radius:7px;flex-shrink:0;display:grid;place-items:center;margin:0}.task input:checked{background:var(--green);border-color:var(--green)}.task input:checked:after{content:"✓";color:white;font-size:14px;font-weight:900}.task .sub{display:block;font-size:11px;color:var(--muted);margin-top:2px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:13px}.field label{display:block;font-size:11px;color:var(--muted);font-weight:750;margin:0 0 5px}.field input,.field textarea,.field select,.wide-input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px;background:#fbfcfa;color:var(--ink);outline:none}.field input:focus,.field textarea:focus{border-color:var(--green)}.field textarea{min-height:74px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.btn{border:0;border-radius:12px;padding:12px 15px;font-weight:800;font-size:13px}.primary{background:var(--green);color:white}.secondary{background:#e8ede6;color:var(--ink)}.danger{background:#f8e8e5;color:var(--red)}.hint{font-size:12px;color:var(--muted);margin:7px 2px 14px}.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{background:white;border:1px solid var(--line);border-radius:16px;padding:15px}.metric small{display:block;color:var(--muted);font-size:11px}.metric strong{display:block;font-size:24px;letter-spacing:-.04em;margin:5px 0}.metric span{font-size:11px;color:var(--muted)}.barrow{margin:14px 0}.barlabel{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}.barlabel span:last-child{font-weight:800}.bar{height:8px;border-radius:99px;background:#e9eee8;overflow:hidden}.bar i{display:block;height:100%;background:var(--green);border-radius:99px}.insight{background:#fff8e5;border:1px solid #f2e5bc;border-radius:16px;padding:15px;margin:12px 0}.insight strong{display:block;margin-bottom:4px}.insight p{font-size:13px;margin:0;color:#66582f}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-weight:700}.empty{padding:25px 10px;text-align:center;color:var(--muted);font-size:13px}.bottom{position:fixed;bottom:0;left:0;right:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#f4f6f2ed;backdrop-filter:blur(12px);border-top:1px solid #dfe6dd;z-index:5}.bottom-inner{max-width:728px;margin:auto;display:flex;gap:8px}.bottom .btn{flex:1}.status{font-size:11px;color:var(--muted);text-align:center;margin:9px 0}.hidden{display:none!important}.pill{display:inline-block;background:#e8ede6;color:#4d5b51;padding:4px 8px;border-radius:99px;font-size:10px;font-weight:800}.small-note{font-size:11px;color:var(--muted)}.footer{font-size:11px;color:var(--muted);text-align:center;margin-top:25px}
+@media(min-width:620px){.metric-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.hero h1{font-size:30px}.fields.three{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="brand">LIFE <span>OS</span></div><div class="date-chip" id="todayLabel"></div></header>
+<section class="hero">
+<div class="eyebrow">Your daily operating system</div>
+<h1>오늘의 작은 실행이<br>내일의 결과를 만든다.</h1>
+<p>완벽함보다 지속성. 오늘 할 수 있는 행동부터 기록해.</p>
+<div class="hero-row">
+<div class="ring" id="mainRing" style="--pct:0%"><strong id="mainRate">0%</strong></div>
+<div class="hero-stats">
+<div class="hero-stat"><small>오늘 완료</small><strong id="doneCount">0 / 0</strong></div>
+<div class="hero-stat"><small>연속 실행일</small><strong id="streak">0일</strong></div>
+<div class="hero-stat"><small>이번 달 실행률</small><strong id="monthRate">—%</strong></div>
+<div class="hero-stat"><small>유료 고객 누적</small><strong id="paidCustomers">0명</strong></div>
+</div></div></section>
+<nav class="nav"><button class="active" data-tab="today">오늘 기록</button><button data-tab="insights">성과 분석</button><button data-tab="data">데이터 관리</button></nav>
+
+<main id="todayView">
+<div class="section-head"><div><h2>오늘의 체크인</h2><p>완료한 행동을 체크하고 실제 수치를 입력해.</p></div><input id="recordDate" type="date" style="border:1px solid var(--line);border-radius:10px;padding:8px;background:white;font-size:12px;width:140px"></div>
+<div id="categories"></div>
+<div class="card">
+<div class="category-title"><div class="cat-icon">📝</div><div><h3>오늘의 회고</h3><p>병목과 내일의 개선 행동을 기록</p></div></div>
+<div class="fields">
+<div class="field full"><label>오늘 가장 중요한 성과</label><textarea id="reflectionWin" placeholder="작더라도 실제로 해낸 것"></textarea></div>
+<div class="field full"><label>오늘 가장 큰 병목</label><textarea id="reflectionBlocker" placeholder="무엇 때문에 실행이 막혔나?"></textarea></div>
+<div class="field full"><label>내일의 개선 행동 1개</label><input id="tomorrowAction" placeholder="예: 오전 9시에 잠재 고객 1명에게 제안 보내기"></div>
+</div></div>
+<div class="actions"><button class="btn primary" id="saveBtn">오늘 기록 저장</button><button class="btn secondary" id="minimumBtn">최소 행동 모드</button></div>
+<p class="hint">자동 저장은 이 기기의 브라우저에 기록돼. 기기 변경·브라우저 데이터 삭제에 대비해 정기적으로 백업 파일을 내보내 줘.</p>
+</main>
+
+<main id="insightsView" class="hidden">
+<div class="section-head"><div><h2>성과 분석</h2><p>실행과 결과를 분리해서 확인해.</p></div><span class="pill">최근 7일 · 이번 달</span></div>
+<div class="metric-grid">
+<div class="metric"><small>오늘 실행률</small><strong id="iToday">0%</strong><span>예정 행동 대비 완료</span></div>
+<div class="metric"><small>최근 7일 실행률</small><strong id="iWeek">—%</strong><span id="iWeekDays">기록 일수 0일</span></div>
+<div class="metric"><small>이번 달 실행률</small><strong id="iMonth">—%</strong><span id="iMonthDays">기록 일수 0일</span></div>
+<div class="metric"><small>사업 결제액 누적</small><strong id="iRevenue">¥0</strong><span>입력한 결제액 합계</span></div>
+</div>
+<div class="card" style="margin-top:12px"><div class="section-head" style="margin-top:0"><div><h2>영역별 실행률</h2><p>최근 7일 기록 기준</p></div></div><div id="categoryBars"></div></div>
+<div class="insight" id="bottleneck"><strong>🔎 병목 분석</strong><p>기록이 쌓이면 개선할 영역을 찾아줄게.</p></div>
+<div class="card"><div class="section-head" style="margin-top:0"><div><h2>사업 결과</h2><p>활동량과 매출 결과를 별도로 추적</p></div></div><div class="metric-grid">
+<div class="metric"><small>고객 접촉</small><strong id="bContacts">0</strong><span>누적 기록</span></div>
+<div class="metric"><small>마케팅</small><strong id="bMarketing">0</strong><span>누적 기록</span></div>
+<div class="metric"><small>블로그 글</small><strong id="bBlogs">0</strong><span>누적 기록</span></div>
+<div class="metric"><small>유료 고객</small><strong id="bCustomers">0</strong><span>누적 기록</span></div>
+</div><div class="fields"><div class="field"><label>총 제안 수</label><div id="bProposals" class="wide-input">0</div></div><div class="field"><label>고객 전환율</label><div id="bConversion" class="wide-input">—%</div></div></div></div>
+<div class="card"><div class="section-head" style="margin-top:0"><div><h2>최근 기록</h2><p>날짜별 실행률</p></div></div><div id="historyTable" class="table-wrap"></div></div>
+</main>
+
+<main id="dataView" class="hidden">
+<div class="section-head"><div><h2>데이터 관리</h2><p>기록을 백업하거나 다른 기기로 옮겨.</p></div></div>
+<div class="card"><div class="category-title"><div class="cat-icon">💾</div><div><h3>백업 및 복원</h3><p>JSON은 전체 기록 복원용, CSV는 스프레드시트 분석용</p></div></div>
+<div class="actions"><button class="btn primary" id="exportJson">전체 백업 다운로드 (JSON)</button><button class="btn secondary" id="exportCsv">기록 내보내기 (CSV)</button></div>
+<div class="field"><label>백업 파일 복원</label><input id="importFile" type="file" accept=".json,application/json"></div>
+<p class="small-note">복원은 기존 기록과 병합해. 같은 날짜는 백업 파일의 기록으로 덮어써.</p></div>
+<div class="card"><div class="category-title"><div class="cat-icon">⚙️</div><div><h3>목표 설정</h3><p>식단 목표와 4대 금지 항목을 조정할 수 있어.</p></div></div>
+<div class="fields three"><div class="field"><label>탄수화물 목표 (g)</label><input type="number" id="goalCarbs" min="0"></div><div class="field"><label>단백질 목표 (g)</label><input type="number" id="goalProtein" min="0"></div><div class="field"><label>지방 목표 (g)</label><input type="number" id="goalFat" min="0"></div></div>
+<div class="field" style="margin-top:10px"><label>4대 금지 항목 (쉼표로 구분)</label><input id="forbidden" placeholder="예: 설탕, 밀가루, 튀김, 가공 간식"></div>
+<div class="actions"><button class="btn primary" id="saveSettings">목표 저장</button></div></div>
+<div class="card"><div class="category-title"><div class="cat-icon">🔒</div><div><h3>저장 방식과 개인정보</h3><p>현재 버전은 개인 테스트용 로컬 저장 방식</p></div></div><p style="font-size:13px;margin:0">기록은 이 브라우저의 localStorage에 저장돼. 서버 계정이나 기기 간 동기화는 아직 없어. 앱을 다른 사람에게 출시하기 전에는 로그인, 서버 데이터베이스, 접근 권한, 백업 및 개인정보 처리 방식을 추가해야 해.</p></div>
+<div class="actions"><button class="btn danger" id="clearAll">모든 기록 삭제</button></div>
+</main>
+<div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
+</div>
+<div class="bottom"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button><button class="btn primary" id="bottomSave">✓ 오늘 저장</button></div></div>
+<script src="app.js"></script>
+</body></html>
