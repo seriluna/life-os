@@ -27,7 +27,7 @@ if(importButton&&importInput){
   const file=event.target.files&&event.target.files[0]; if(!file)return;
   try{
    const data=JSON.parse(await file.text());
-   const source=data.logs||data.healthLogs||data;
+   const source=data.logs||data.healthLogs||data; if(data.goals&&typeof data.goals==="object"){goals={...goals,...data.goals};localStorage.setItem(GOAL_KEY,JSON.stringify(goals));}
    if(!source||typeof source!=="object"||Array.isArray(source))throw new Error("format");
    let added=0;
    for(const date of Object.keys(source)){
@@ -42,7 +42,7 @@ if(importButton&&importInput){
       else if(raw&&typeof raw==="object")mealData[key]={food:raw.food||raw.text||"",kcal:raw.kcal??raw.calories??"",carbs:raw.carbs??"",protein:raw.protein??"",fat:raw.fat??""};
      }
     }
-    logs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData}; added++;
+    const ff=item.foodFlags||{};const normalizedFlags={...ff,unprocessed:ff.unprocessed??ff.processed??"",noFlour:ff.noFlour??ff.powder??"",noSweets:ff.noSweets??ff.sweets??"",noFried:ff.noFried??ff.fried??""};logs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData,foodFlags:normalizedFlags}; added++;
    }
    if(!added)throw new Error("empty");
    localStorage.setItem(KEY,JSON.stringify(logs)); fill($("healthDate").value||today());renderHistory();
