@@ -20,5 +20,37 @@ $("healthMeals").addEventListener("input",totals);
 $("saveHealthLog").addEventListener("click",save);
 $("clearHealthForm").addEventListener("click",()=>{if(confirm("현재 입력 내용을 비울까? 저장된 기록은 삭제되지 않아."))fill($("healthDate").value||today())});
 $("exportHealthCsv").addEventListener("click",exportCsv);
+const importButton=$("importHealthJsonBtn"), importInput=$("importHealthJson");
+if(importButton&&importInput){
+ importButton.addEventListener("click",()=>importInput.click());
+ importInput.addEventListener("change",async event=>{
+  const file=event.target.files&&event.target.files[0]; if(!file)return;
+  try{
+   const data=JSON.parse(await file.text());
+   const source=data.logs||data.healthLogs||data;
+   if(!source||typeof source!=="object"||Array.isArray(source))throw new Error("format");
+   let added=0;
+   for(const date of Object.keys(source)){
+    const item=source[date];
+    if(date.length!==10||date[4]!=="-"||date[7]!=="-"||!item||typeof item!=="object")continue;
+    let mealData=item.meals;
+    if(!mealData){
+     mealData={};
+     for(const key of ["breakfast","lunch","dinner","snack"]){
+      const raw=item[key];
+      if(typeof raw==="string")mealData[key]={food:raw,kcal:"",carbs:"",protein:"",fat:""};
+      else if(raw&&typeof raw==="object")mealData[key]={food:raw.food||raw.text||"",kcal:raw.kcal??raw.calories??"",carbs:raw.carbs??"",protein:raw.protein??"",fat:raw.fat??""};
+     }
+    }
+    logs[date]={date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData}; added++;
+   }
+   if(!added)throw new Error("empty");
+   localStorage.setItem(KEY,JSON.stringify(logs)); fill($("healthDate").value||today());renderHistory();
+   alert(added+"일의 기록을 가져왔어. 기록은 이 브라우저에만 저장돼.");
+  }catch(error){alert("가져오기에 실패했어. 날짜별 기록이 담긴 JSON 파일인지 확인해 줘.");}
+  event.target.value="";
+ });
+}
+
 $("healthHistory").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.healthEdit){fill(b.dataset.healthEdit);$("healthLogCard").scrollIntoView({behavior:"smooth",block:"start"})}if(b.dataset.healthDelete&&confirm(b.dataset.healthDelete+" 기록을 삭제할까?")){delete logs[b.dataset.healthDelete];localStorage.setItem(KEY,JSON.stringify(logs));renderHistory();if($("healthDate").value===b.dataset.healthDelete)fill(b.dataset.healthDate||today())}});
 })();
