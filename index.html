@@ -61,7 +61,7 @@
 </div></div>
 <div class="actions"><button class="btn primary" id="saveBtn">오늘 기록 저장</button></div>
 <p class="hint">자동 저장은 이 기기의 브라우저에 기록돼. 기기 변경·브라우저 데이터 삭제에 대비해 정기적으로 백업 파일을 내보내 줘.</p>
-<div class="card" id="healthHistoryCard"><div class="health-history-head"><h3>저장된 날짜별 기록</h3><span class="small-note">최근 기록부터 표시</span></div><div id="healthHistory"></div></div></main>
+</main>
 
 <main id="insightsView" class="hidden">
 <div class="section-head"><div><h2>성과 분석</h2><p>실행과 결과를 분리해서 확인해.</p></div><span class="pill">최근 7일 · 이번 달</span></div>
@@ -95,7 +95,7 @@
 <div class="health-meal" id="healthGoalCard"><h4>🎯 목표 설정</h4><div class="health-macros"><div><label for="hl-goal-weight">목표 체중 (kg)</label><input id="hl-goal-weight" type="number" step="0.1"></div><div><label for="hl-goal-calories">칼로리 목표</label><input id="hl-goal-calories" type="number"></div><div><label for="hl-goal-carbs">탄수화물 목표 (g)</label><input id="hl-goal-carbs" type="number"></div><div><label for="hl-goal-protein">단백질 목표 (g)</label><input id="hl-goal-protein" type="number"></div><div><label for="hl-goal-fat">지방 목표 (g)</label><input id="hl-goal-fat" type="number"></div></div><p class="health-small">목표: 52kg에서 46kg, 탄수화물 100g · 단백질 100g · 지방 40g · 하루 1300kcal</p></div><div class="card"><div class="category-title"><div class="cat-icon">🛠️</div><div><h3>체크리스트 직접 편집</h3><p>큰 항목과 세부 체크 항목을 추가·이름 변경·삭제할 수 있어.</p></div></div><div class="fields"><div class="field"><label for="newGroupName">큰 항목 추가</label><input id="newGroupName" placeholder="예: 공부"></div><div class="field" style="align-self:end"><button class="btn primary" id="addGroup" type="button">큰 항목 추가</button></div><div class="field"><label for="editGroupSelect">세부 항목을 넣을 큰 항목</label><select id="editGroupSelect"></select></div><div class="field"><label for="newTaskName">세부 체크 항목 추가</label><input id="newTaskName" placeholder="예: 책 20분 읽기"></div><div class="field full"><button class="btn primary" id="addTask" type="button">세부 항목 추가</button></div></div><div id="groupEditorList"></div><p class="small-note">수정 내용은 이 브라우저에 저장돼.</p></div>
 <div class="card"><div class="category-title"><div class="cat-icon">🔒</div><div><h3>저장 방식과 개인정보</h3><p>현재 버전은 개인 테스트용 로컬 저장 방식</p></div></div><p style="font-size:13px;margin:0">기록은 이 브라우저의 localStorage에 저장돼. 서버 계정이나 기기 간 동기화는 아직 없어. 앱을 다른 사람에게 출시하기 전에는 로그인, 서버 데이터베이스, 접근 권한, 백업 및 개인정보 처리 방식을 추가해야 해.</p></div>
 <div class="actions"><button class="btn danger" id="clearAll">모든 기록 삭제</button></div>
-</main>
+<div class="card" id="healthHistoryCard"><div class="health-history-head"><h3>저장된 날짜별 기록</h3><span class="small-note">최근 기록부터 표시</span></div><div id="healthHistory"></div></div></main>
 <div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
 </div>
 <div class="bottom"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button><button class="btn primary" id="bottomSave">✓ 오늘 저장</button></div></div>
