@@ -42,7 +42,7 @@
 
 <main id="todayView">
 <div class="section-head checkin-head"><div><h2>오늘의 체크인</h2><p>완료한 행동을 체크하고 실제 수치를 입력해.</p><div class="mode-switch" role="group" aria-label="실행 모드"><button type="button" id="modeFull" class="mode-btn mode-full" aria-pressed="true">🔥 분투 모드</button><button type="button" id="modeMinimum" class="mode-btn mode-minimum" aria-pressed="false">🌱 최소 행동 모드</button></div></div><input id="recordDate" type="date" style="border:1px solid var(--line);border-radius:10px;padding:8px;background:white;font-size:12px;width:140px"></div>
-<div id="categories"></div>
+<section class="card" id="projectTimelineCard"><div class="category-title"><div class="cat-icon">🎯</div><div><h3>프로젝트 실행 기간</h3><p>시작일과 목표 완료일을 설정하면 경과일과 남은 날을 자동 계산해.</p></div></div><div class="fields"><div class="field"><label for="projectStartDate">프로젝트 시작일</label><input type="date" id="projectStartDate"></div><div class="field"><label for="projectTargetDate">목표 실행 완료일</label><input type="date" id="projectTargetDate"></div></div><div class="metric-grid" style="margin-top:12px"><div class="metric"><small>경과 일수</small><strong id="projectElapsedDays">—일</strong><span id="projectStartLabel">시작일 설정 필요</span></div><div class="metric"><small>남은 일수</small><strong id="projectRemainingDays">—일</strong><span id="projectTargetLabel">완료 목표일 설정 필요</span></div></div><div class="actions"><button type="button" class="btn primary" id="saveProjectTimeline">프로젝트 기간 저장</button></div><p class="small-note" id="projectTimelineStatus">시작일과 목표 완료일을 입력해 줘.</p></section><div id="categories"></div>
 <div class="card">
 <section class="card" id="healthLogCard">
 <div class="category-title"><div class="cat-icon">🥑</div><div><h3>식단 기록</h3><p>날짜별로 자유롭게 추가하고, 지난 기록도 수정할 수 있어.</p></div></div>
@@ -98,5 +98,5 @@
 <div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
 </div>
 <div class="bottom"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button><button class="btn primary" id="bottomSave">✓ 오늘 저장</button></div></div>
-<script src="app.js?v=33"></script><script src="health-log.js?v=20"></script>
+<script src="app.js?v=34"></script><script src="health-log.js?v=20"></script>
 </body></html>
