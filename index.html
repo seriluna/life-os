@@ -47,7 +47,7 @@
 <div class="health-date-row"><div class="field"><label for="healthDate">기록 날짜</label><input type="date" id="healthDate" required></div><div class="field"><label for="fastingWeight">아침 공복 몸무게 (kg)</label><input type="number" id="fastingWeight" min="20" max="300" step="0.1" placeholder="예: 52.2"></div></div>
 <div id="healthMeals"></div><div class="health-total"><strong>하루 합계</strong><span id="healthTotalKcal">0 kcal</span><span id="healthTotalMacros">탄수화물 0g · 단백질 0g · 지방 0g</span></div>
 <div class="field" style="margin-top:10px"><label for="healthNote">메모 (선택)</label><textarea id="healthNote" placeholder="운동, 컨디션, 외식 등 메모" rows="2"></textarea></div>
-<div class="actions"><button class="btn primary" id="saveHealthLog" type="button">식단·몸무게 저장</button><button class="btn secondary" id="clearHealthForm" type="button">입력 내용 비우기</button><button class="btn secondary" id="exportHealthCsv" type="button">식단·몸무게 Excel용 CSV 다운로드</button></div>
+<div class="actions"><button class="btn primary" id="saveHealthLog" type="button">식단·몸무게 저장</button><button class="btn secondary" id="clearHealthForm" type="button">입력 내용 비우기</button><button class="btn secondary" id="exportHealthCsv" type="button">식단·몸무게 Excel용 CSV 다운로드</button><button class="btn secondary" id="importHealthJsonBtn" type="button">내 기록 파일 가져오기</button><input id="importHealthJson" type="file" accept=".json,application/json" hidden></div>
 <p class="small-note">음식 이름만 입력해도 저장돼. 칼로리와 탄단지는 알고 있을 때만 입력하면 돼. 같은 날짜를 다시 저장하면 해당 날짜 기록이 수정돼.</p>
 <div class="health-history-head"><h3>저장된 날짜별 기록</h3><span class="small-note">최근 기록부터 표시</span></div><div id="healthHistory"></div>
 </section><div class="category-title"><div class="cat-icon">📝</div><div><h3>오늘의 회고</h3><p>병목과 내일의 개선 행동을 기록</p></div></div>
