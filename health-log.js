@@ -77,5 +77,5 @@ if(importInput&&applyImport){
  });
 }
 
-$("healthHistory").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.healthEdit){fill(b.dataset.healthEdit);$("healthLogCard").scrollIntoView({behavior:"smooth",block:"start"})}if(b.dataset.healthDelete&&confirm(b.dataset.healthDelete+" 기록을 삭제할까?")){delete logs[b.dataset.healthDelete];localStorage.setItem(KEY,JSON.stringify(logs));renderHistory();if($("healthDate").value===b.dataset.healthDelete)fill(b.dataset.healthDate||today())}});
+$("healthHistory").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.healthEdit){const d=b.dataset.healthEdit;const mainDate=document.getElementById("recordDate");if(mainDate&&mainDate.value!==d){mainDate.value=d;mainDate.dispatchEvent(new Event("change",{bubbles:true}))}fill(d);const mainTab=document.querySelector('[data-tab="today"]');if(mainTab)mainTab.click();$("healthLogCard").scrollIntoView({behavior:"smooth",block:"start"})}if(b.dataset.healthDelete&&confirm(b.dataset.healthDelete+" 기록을 삭제할까?")){delete logs[b.dataset.healthDelete];localStorage.setItem(KEY,JSON.stringify(logs));renderHistory();if($("healthDate").value===b.dataset.healthDelete)fill(b.dataset.healthDate||today())}});
 })();
