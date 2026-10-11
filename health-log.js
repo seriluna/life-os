@@ -21,22 +21,30 @@ $("saveHealthLog").addEventListener("click",save);
 $("clearHealthForm").addEventListener("click",()=>{if(confirm("현재 입력 내용을 비울까? 저장된 기록은 삭제되지 않아."))fill($("healthDate").value||today())});
 $("exportHealthCsv").addEventListener("click",exportCsv);
 const importInput=$("importHealthJson"), applyImport=$("applyHealthImport"), importStatus=$("healthImportStatus");
-let selectedImportFile=null;
 if(importInput&&applyImport){
- importInput.addEventListener("change",e=>{
-  selectedImportFile=e.target.files&&e.target.files[0]||null;
-  if(importStatus)importStatus.textContent=selectedImportFile?"선택됨: "+selectedImportFile.name+" · 아래 ‘선택한 파일 기록 반영하기’를 눌러 줘.":"파일이 선택되지 않았어.";
+ const setImportStatus=(message)=>{if(importStatus)importStatus.textContent=message;};
+ importInput.addEventListener("change",()=>{
+  const f=importInput.files&&importInput.files[0];
+  setImportStatus(f?"파일 선택됨: "+f.name+" ("+Math.ceil(f.size/1024)+" KB). 이제 아래 반영 버튼을 눌러 줘.":"파일이 선택되지 않았어.");
  });
  applyImport.addEventListener("click",async()=>{
-  const file=selectedImportFile|| (importInput.files&&importInput.files[0]);
-  if(!file){if(importStatus)importStatus.textContent="먼저 JSON 파일을 선택해 줘.";alert("먼저 JSON 파일을 선택해 줘.");return;}
-  applyImport.disabled=true;applyImport.textContent="기록 반영 중…";
+  const file=importInput.files&&importInput.files[0];
+  if(!file){setImportStatus("먼저 JSON 파일을 선택해 줘.");alert("먼저 JSON 파일을 선택해 줘.");return;}
+  applyImport.disabled=true;applyImport.textContent="파일 읽는 중…";setImportStatus("파일 읽는 중…");
   try{
-   const data=JSON.parse(await file.text());
-   const source=data.logs||data.healthLogs;
-   if(!source||typeof source!=="object"||Array.isArray(source))throw new Error("format");
+   const textContent=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||""));
+    reader.onerror=()=>reject(new Error("파일 읽기 실패"));
+    reader.readAsText(file,"UTF-8");
+   });
+   setImportStatus("JSON 확인 중…");
+   const data=JSON.parse(textContent);
+   const source=data&& (data.logs||data.healthLogs);
+   if(!source||typeof source!=="object"||Array.isArray(source))throw new Error("파일 안에서 날짜별 logs 데이터를 찾지 못했어.");
    const dates=Object.keys(source).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&source[d]&&typeof source[d]==="object").sort();
-   if(!dates.length)throw new Error("empty");
+   if(!dates.length)throw new Error("날짜 형식의 기록이 없어. 개인 기록 JSON 파일인지 확인해 줘.");
+   setImportStatus(dates.length+"일 기록 확인. 브라우저에 저장하는 중…");
    const nextLogs={...logs};
    for(const date of dates){
     const item=source[date];let mealData=item.meals;
@@ -56,11 +64,12 @@ if(importInput&&applyImport){
    localStorage.setItem(GOAL_KEY,JSON.stringify(mergedGoals));
    logs=nextLogs;goals=mergedGoals;
    fill($("healthDate").value||today());renderHistory();
-   if(importStatus)importStatus.textContent="반영 완료: "+dates.length+"일 ("+dates[0]+" ~ "+dates[dates.length-1]+") · 목표 설정 포함";
+   setImportStatus("반영 완료: "+dates.length+"일 ("+dates[0]+" ~ "+dates[dates.length-1]+") · 목표 설정 포함");
    alert("가져오기 완료! "+dates.length+"일의 기록("+dates[0]+"~"+dates[dates.length-1]+")과 목표 설정을 저장했어. 매일 다시 업로드할 필요 없어. 이 브라우저에만 저장돼.");
   }catch(error){
-   if(importStatus)importStatus.textContent="반영 실패: LIFE OS 개인 기록 JSON 파일인지 확인해 줛.";
-   alert("가져오기에 실패했어. 올바른 개인 기록 JSON 파일인지 확인해 줘.");
+   const message=error&&error.message?error.message:"알 수 없는 오류";
+   setImportStatus("반영 실패: "+message);
+   alert("기록 반영 실패: "+message);
   }finally{applyImport.disabled=false;applyImport.textContent="선택한 파일 기록 반영하기";}
  });
 }
