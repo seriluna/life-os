@@ -1,6 +1,6 @@
 (() => {
 "use strict";
-const KEY="lifeos.health.logs.v1", GOAL_KEY="lifeos.health.goals.v1", $=id=>document.getElementById(id);
+const ACTIVE_PROJECT_KEY="lifeos.activeProject.v1",activeProjectId=localStorage.getItem(ACTIVE_PROJECT_KEY)||"project1",KEY="lifeos.health.logs.v1."+activeProjectId,GOAL_KEY="lifeos.health.goals.v1."+activeProjectId,$=id=>document.getElementById(id);if(activeProjectId==="project1"&&!localStorage.getItem(KEY)&&localStorage.getItem("lifeos.health.logs.v1"))localStorage.setItem(KEY,localStorage.getItem("lifeos.health.logs.v1"));if(activeProjectId==="project1"&&!localStorage.getItem(GOAL_KEY)&&localStorage.getItem("lifeos.health.goals.v1"))localStorage.setItem(GOAL_KEY,localStorage.getItem("lifeos.health.goals.v1"));
 const meals=[{id:"breakfast",name:"아침",icon:"🍳"},{id:"lunch",name:"점심",icon:"🥗"},{id:"dinner",name:"저녁",icon:"🌙"}];
 let logs={};try{logs=JSON.parse(localStorage.getItem(KEY)||"{}");if(!logs||typeof logs!=="object"||Array.isArray(logs))logs={}}catch{logs={}}
 let goals={targetWeightKg:46,startWeightKg:52,deadline:"2026-10-30",dailyTargets:{carbsG:100,proteinG:100,fatG:40,caloriesKcal:1300},routineTargets:{absMinutes:20,strengthMinutes:30,yogaMinutes:10,hipReps:150,weekendCardioMinutes:60}};try{goals={...goals,...JSON.parse(localStorage.getItem(GOAL_KEY)||"{}")}}catch{}
