@@ -60,7 +60,12 @@ if(importInput&&applyImport){
      }
     }
     const ff=item.foodFlags||{};
-    nextLogs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData,foodFlags:{...ff,unprocessed:ff.unprocessed??ff.processed??"",noFlour:ff.noFlour??ff.powder??"",noSweets:ff.noSweets??ff.sweets??"",noFried:ff.noFried??ff.fried??""}};
+    // Legacy snack is retained in the dinner text because the editor now has only three meals.
+    if(mealData.snack){const snack=mealData.snack, dinner=mealData.dinner||{food:"",kcal:"",carbs:"",protein:"",fat:""};if(snack.food){dinner.food=[dinner.food,snack.food].filter(Boolean).join(" · 간식: ")};["kcal","carbs","protein","fat"].forEach(k=>{if((dinner[k]===""||dinner[k]==null)&&snack[k]!==""&&snack[k]!=null)dinner[k]=snack[k]});mealData.dinner=dinner;delete mealData.snack;}
+    const macroKeys=["kcal","carbs","protein","fat"];
+    for(const meal of ["breakfast","lunch","dinner"]){const v=mealData[meal];if(!v)continue;const est=estimateMacros(v.food||"");if(est)macroKeys.forEach(k=>{if(v[k]===""||v[k]==null)v[k]=est[k]});}
+    const total={kcal:0,carbs:0,protein:0,fat:0};for(const meal of ["breakfast","lunch","dinner"]){const v=mealData[meal]||{};macroKeys.forEach(k=>total[k]+=Number(v[k])||0)}
+    nextLogs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData,dailyTotals:total,foodFlags:{...ff,unprocessed:ff.unprocessed??ff.processed??"",noFlour:ff.noFlour??ff.powder??"",noSweets:ff.noSweets??ff.sweets??"",noFried:ff.noFried??ff.fried??""}};
    }
    const mergedGoals=data.goals&&typeof data.goals==="object"?{...goals,...data.goals}:goals;
    localStorage.setItem(KEY,JSON.stringify(nextLogs));
