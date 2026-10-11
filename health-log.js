@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const KEY="lifeos.health.logs.v1", GOAL_KEY="lifeos.health.goals.v1", $=id=>document.getElementById(id);
-const meals=[{id:"breakfast",name:"아침",icon:"🍳"},{id:"lunch",name:"점심",icon:"🥗"},{id:"dinner",name:"저녁",icon:"🌙"},{id:"snack",name:"간식",icon:"🍎"}];
+const meals=[{id:"breakfast",name:"아침",icon:"🍳"},{id:"lunch",name:"점심",icon:"🥗"},{id:"dinner",name:"저녁",icon:"🌙"}];
 let logs={};try{logs=JSON.parse(localStorage.getItem(KEY)||"{}");if(!logs||typeof logs!=="object"||Array.isArray(logs))logs={}}catch{logs={}}
 let goals={targetWeightKg:46,startWeightKg:52,deadline:"2026-10-30",dailyTargets:{carbsG:100,proteinG:100,fatG:40,caloriesKcal:1300},routineTargets:{absMinutes:20,strengthMinutes:30,yogaMinutes:10,hipReps:150,weekendCardioMinutes:60}};try{goals={...goals,...JSON.parse(localStorage.getItem(GOAL_KEY)||"{}")}}catch{}
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
