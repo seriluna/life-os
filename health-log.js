@@ -20,19 +20,19 @@ $("healthMeals").addEventListener("input",totals);
 $("saveHealthLog").addEventListener("click",save);
 $("clearHealthForm").addEventListener("click",()=>{if(confirm("현재 입력 내용을 비울까? 저장된 기록은 삭제되지 않아."))fill($("healthDate").value||today())});
 $("exportHealthCsv").addEventListener("click",exportCsv);
-const importButton=$("importHealthJsonBtn"), importInput=$("importHealthJson");
-if(importButton&&importInput){
- importButton.addEventListener("click",()=>importInput.click());
+const importInput=$("importHealthJson");
+if(importInput){
  importInput.addEventListener("change",async event=>{
   const file=event.target.files&&event.target.files[0]; if(!file)return;
   try{
    const data=JSON.parse(await file.text());
-   const source=data.logs||data.healthLogs||data; if(data.goals&&typeof data.goals==="object"){goals={...goals,...data.goals};localStorage.setItem(GOAL_KEY,JSON.stringify(goals));}
+   const source=data.logs||data.healthLogs;
    if(!source||typeof source!=="object"||Array.isArray(source))throw new Error("format");
+   if(data.goals&&typeof data.goals==="object"){goals={...goals,...data.goals};localStorage.setItem(GOAL_KEY,JSON.stringify(goals));}
    let added=0;
    for(const date of Object.keys(source)){
     const item=source[date];
-    if(date.length!==10||date[4]!=="-"||date[7]!=="-"||!item||typeof item!=="object")continue;
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!item||typeof item!=="object")continue;
     let mealData=item.meals;
     if(!mealData){
      mealData={};
@@ -42,12 +42,16 @@ if(importButton&&importInput){
       else if(raw&&typeof raw==="object")mealData[key]={food:raw.food||raw.text||"",kcal:raw.kcal??raw.calories??"",carbs:raw.carbs??"",protein:raw.protein??"",fat:raw.fat??""};
      }
     }
-    const ff=item.foodFlags||{};const normalizedFlags={...ff,unprocessed:ff.unprocessed??ff.processed??"",noFlour:ff.noFlour??ff.powder??"",noSweets:ff.noSweets??ff.sweets??"",noFried:ff.noFried??ff.fried??""};logs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData,foodFlags:normalizedFlags}; added++;
+    const ff=item.foodFlags||{};
+    const normalizedFlags={...ff,unprocessed:ff.unprocessed??ff.processed??"",noFlour:ff.noFlour??ff.powder??"",noSweets:ff.noSweets??ff.sweets??"",noFried:ff.noFried??ff.fried??""};
+    logs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData,foodFlags:normalizedFlags}; added++;
    }
    if(!added)throw new Error("empty");
-   localStorage.setItem(KEY,JSON.stringify(logs)); fill($("healthDate").value||today());renderHistory();
-   alert(added+"일의 기록을 가져왔어. 기록은 이 브라우저에만 저장돼.");
-  }catch(error){alert("가져오기에 실패했어. 날짜별 기록이 담긴 JSON 파일인지 확인해 줘.");}
+   localStorage.setItem(KEY,JSON.stringify(logs));
+   fill($("healthDate").value||today());renderHistory();
+   const dates=Object.keys(source).filter(d=>/^\\d{4}-\\d{2}-\\d{2}$/.test(d)).sort();
+   alert("가져오기 완료! "+added+"일의 기록("+dates[0]+"~"+dates[dates.length-1]+")과 목표 설정을 한 번에 저장했어. 매일 다시 업로드할 필요 없어. 데이터는 이 브라우저에만 저장돼.");
+  }catch(error){alert("가져오기에 실패했어. LIFE OS 개인 기록 JSON 파일인지 확인해 줘.");}
   event.target.value="";
  });
 }
