@@ -85,7 +85,7 @@
 <div class="section-head"><div><h2>데이터 관리</h2><p>기록을 백업하거나 다른 기기로 옮겨.</p></div></div>
 <div class="card"><div class="category-title"><div class="cat-icon">💾</div><div><h3>백업 및 복원</h3><p>JSON은 전체 기록 복원용, CSV는 스프레드시트 분석용</p></div></div>
 <div class="actions"><button class="btn primary" id="exportJson">전체 백업 다운로드 (JSON)</button><button class="btn secondary" id="exportCsv">기록 내보내기 (CSV)</button></div>
-<div class="field"><label>백업 파일 복원</label><input id="importFile" type="file" accept=".json,application/json"></div><div class="field" style="margin-top:14px"><label for="importHealthJson">개인 식단·운동 기록 일괄 가져오기</label><input id="importHealthJson" type="file" accept=".json,application/json" style="display:block;width:100%;margin-top:8px;font-size:12px"><p class="small-note">한 번만 파일을 선택하면 파일 안의 모든 날짜 기록과 목표 설정을 한꺼번에 가져와. 날짜마다 따로 업로드할 필요 없어.</p></div>
+<div class="field"><label>백업 파일 복원</label><input id="importFile" type="file" accept=".json,application/json"></div><div class="field" style="margin-top:14px"><label for="importHealthJson">개인 식단·운동 기록 일괄 가져오기</label><input id="importHealthJson" type="file" accept=".json,application/json" style="display:block;width:100%;margin-top:8px;font-size:12px"><button class="btn primary" id="applyHealthImport" type="button" style="margin-top:10px;width:100%">선택한 파일 기록 반영하기</button><p id="healthImportStatus" class="small-note">파일을 선택한 뒤 위 버튼을 눌러 반영해 줘.</p><p class="small-note">파일 하나로 모든 날짜 기록과 목표 설정을 한꺼번에 가져와. 날짜마다 따로 업로드할 필요 없어.</p></div>
 <p class="small-note">복원은 기존 기록과 병합해. 같은 날짜는 백업 파일의 기록으로 덮어써.</p></div>
 <div class="card"><div class="category-title"><div class="cat-icon">⚙️</div><div><h3>목표 설정</h3><p>식단 목표와 4대 금지 항목을 조정할 수 있어.</p></div></div>
 <div class="fields three"><div class="field"><label>탄수화물 목표 (g)</label><input type="number" id="goalCarbs" min="0"></div><div class="field"><label>단백질 목표 (g)</label><input type="number" id="goalProtein" min="0"></div><div class="field"><label>지방 목표 (g)</label><input type="number" id="goalFat" min="0"></div></div>
@@ -97,5 +97,5 @@
 <div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
 </div>
 <div class="bottom"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button><button class="btn primary" id="bottomSave">✓ 오늘 저장</button></div></div>
-<script src="app.js?v=19"></script><script src="health-log.js?v=5"></script>
+<script src="app.js?v=20"></script><script src="health-log.js?v=6"></script>
 </body></html>
