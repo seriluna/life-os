@@ -66,7 +66,7 @@ if(importInput&&applyImport){
    localStorage.setItem(GOAL_KEY,JSON.stringify(mergedGoals));
    logs=nextLogs;goals=mergedGoals;
    fill($("healthDate").value||today());renderHistory();
-   setImportStatus("반영 완료: "+dates.length+"일 ("+dates[0]+" ~ "+dates[dates.length-1]+") · 목표 설정 포함");
+   setImportStatus("반영 완료: "+dates.length+"일 ("+dates[0]+" ~ "+dates[dates.length-1]+") · 목표 설정 포함");window.dispatchEvent(new Event("lifeos-health-imported"));
    alert("가져오기 완료! "+dates.length+"일의 기록("+dates[0]+"~"+dates[dates.length-1]+")과 목표 설정을 저장했어. 매일 다시 업로드할 필요 없어. 이 브라우저에만 저장돼.");
   }catch(error){
    const message=error&&error.message?error.message:"알 수 없는 오류";
