@@ -13,14 +13,68 @@ test('앱 초기화와 핵심 화면 표시', async ({ page }) => {
 });
 
 test('건강 기록 UI 요소가 페이지에 포함되어 있음', async ({ page }) => {
-  // 건강 기록 날짜 입력은 앱의 현재 탭/표시 상태에 따라 숨겨질 수 있으므로 존재 여부를 확인한다.
   await expect(page.locator('#healthDate')).toHaveCount(1);
   await expect(page.locator('#healthMeals')).toHaveCount(1);
   await expect(page.locator('#exportHealthCsv')).toHaveCount(1);
   await expect(page.locator('#healthHistory')).toHaveCount(1);
 });
 
-test('건강 기록과 루틴 기록의 저장 키 규칙이 코드에 정의되어 있음', async ({ page }) => {
+test('건강 기록을 저장하고 새로고침 후에도 유지함', async ({ page }) => {
+  const date = '2026-01-17';
+  await page.locator('#healthDate').evaluate((el, value) => { el.value = value; }, date);
+  await page.locator('#hl-breakfast-food').fill('테스트 계란 2개');
+  await page.locator('#hl-breakfast-kcal').fill('156');
+  await page.locator('#healthNote').fill('자동 테스트 기록');
+  await page.locator('#saveBtn').click();
+
+  const key = await page.evaluate(() => {
+    const project = localStorage.getItem('lifeos.activeProject.v1') || 'project1';
+    return 'lifeos.health.logs.v1.' + project;
+  });
+  const saved = await page.evaluate(({ key, date }) => {
+    const all = JSON.parse(localStorage.getItem(key) || '{}');
+    return all[date] || null;
+  }, { key, date });
+  expect(saved).not.toBeNull();
+  expect(saved.meals.breakfast.food).toBe('테스트 계란 2개');
+  expect(saved.meals.breakfast.kcal).toBe(156);
+
+  await page.reload();
+  const persisted = await page.evaluate(({ key, date }) => {
+    const all = JSON.parse(localStorage.getItem(key) || '{}');
+    return all[date] || null;
+  }, { key, date });
+  expect(persisted).not.toBeNull();
+  expect(persisted.meals.breakfast.food).toBe('테스트 계란 2개');
+  expect(persisted.note).toBe('자동 테스트 기록');
+});
+
+test('저장된 건강 기록을 수정하고 삭제할 수 있음', async ({ page }) => {
+  const date = '2026-01-18';
+  await page.locator('#healthDate').evaluate((el, value) => { el.value = value; }, date);
+  await page.locator('#hl-lunch-food').fill('테스트 닭가슴살');
+  await page.locator('#saveBtn').click();
+
+  await page.locator('#hl-lunch-food').fill('수정된 테스트 닭가슴살');
+  await page.locator('#saveBtn').click();
+  let saved = await page.evaluate((date) => {
+    const project = localStorage.getItem('lifeos.activeProject.v1') || 'project1';
+    const all = JSON.parse(localStorage.getItem('lifeos.health.logs.v1.' + project) || '{}');
+    return all[date] || null;
+  }, date);
+  expect(saved.meals.lunch.food).toBe('수정된 테스트 닭가슴살');
+
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('[data-health-delete="' + date + '"]').click();
+  saved = await page.evaluate((date) => {
+    const project = localStorage.getItem('lifeos.activeProject.v1') || 'project1';
+    const all = JSON.parse(localStorage.getItem('lifeos.health.logs.v1.' + project) || '{}');
+    return all[date] || null;
+  }, date);
+  expect(saved).toBeNull();
+});
+
+test('건강 기록과 루틴 기록의 저장 키 규칙이 분리되어 있음', async ({ page }) => {
   const [healthScript, appScript] = await Promise.all([
     page.request.get('/health-log.js').then(r => r.text()),
     page.request.get('/app.js').then(r => r.text()),
