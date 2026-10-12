@@ -54,19 +54,38 @@ test('저장된 건강 기록을 수정하고 삭제할 수 있음', async ({ pa
   await page.locator('#hl-lunch-food').fill('테스트 닭가슴살');
   await page.evaluate(() => window.lifeosSaveHealthLog(true));
 
+  let saved = await page.evaluate((date) => {
+    const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
+    const all = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
+    return all[date] || null;
+  }, date);
+  expect(saved.meals.lunch.food).toBe('테스트 닭가슴살');
+
+  // The history is inside the Data view, so open that tab before using its controls.
+  await page.locator('[data-tab="data"]').click();
+  const editButton = page.locator('#healthHistory [data-health-edit="' + date + '"]').first();
+  await expect(editButton).toBeVisible();
+  await editButton.click();
+
+  await expect(page.locator('#todayView')).toBeVisible();
+  await expect(page.locator('#healthDate')).toHaveValue(date);
+  await expect(page.locator('#hl-lunch-food')).toHaveValue('테스트 닭가슴살');
   await page.locator('#hl-lunch-food').fill('수정된 테스트 닭가슴살');
   await page.evaluate(() => window.lifeosSaveHealthLog(true));
-  let saved = await page.evaluate((date) => {
+
+  saved = await page.evaluate((date) => {
     const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
     const all = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
     return all[date] || null;
   }, date);
   expect(saved.meals.lunch.food).toBe('수정된 테스트 닭가슴살');
 
-  const deleteButton = page.locator('[data-health-delete="' + date + '"]');
-  await expect(deleteButton).toHaveCount(1);
+  await page.locator('[data-tab="data"]').click();
+  const deleteButton = page.locator('#healthHistory [data-health-delete="' + date + '"]');
+  await expect(deleteButton).toBeVisible();
   page.once('dialog', dialog => dialog.accept());
   await deleteButton.click();
+
   saved = await page.evaluate((date) => {
     const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
     const all = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
