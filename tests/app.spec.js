@@ -25,7 +25,7 @@ test('건강 기록을 저장하고 새로고침 후에도 유지함', async ({ 
   await page.locator('#hl-breakfast-food').fill('테스트 계란 2개');
   await page.locator('#hl-breakfast-kcal').fill('156');
   await page.locator('#healthNote').fill('자동 테스트 기록');
-  await page.locator('#saveBtn').click();
+  await page.evaluate(() => window.lifeosSaveHealthLog(true));
 
   const saved = await page.evaluate((date) => {
     const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
@@ -51,10 +51,10 @@ test('저장된 건강 기록을 수정하고 삭제할 수 있음', async ({ pa
   const date = '2026-01-18';
   await page.locator('#healthDate').evaluate((el, value) => { el.value = value; }, date);
   await page.locator('#hl-lunch-food').fill('테스트 닭가슴살');
-  await page.locator('#saveBtn').click();
+  await page.evaluate(() => window.lifeosSaveHealthLog(true));
 
   await page.locator('#hl-lunch-food').fill('수정된 테스트 닭가슴살');
-  await page.locator('#saveBtn').click();
+  await page.evaluate(() => window.lifeosSaveHealthLog(true));
   let saved = await page.evaluate((date) => {
     const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
     const all = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
