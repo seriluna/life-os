@@ -94,6 +94,19 @@ test('저장된 건강 기록을 수정하고 삭제할 수 있음', async ({ pa
   expect(saved).toBeNull();
 });
 
+test('화면을 다시 그려도 건강 기록 카드가 식단 영역에 유지됨', async ({ page }) => {
+  const healthCard = page.locator('#healthLogCard');
+  await expect(healthCard).toBeVisible();
+
+  await page.locator('#modeMinimum').click();
+  await expect(healthCard).toBeVisible();
+  await expect(page.locator('#categories [data-checklist-group="diet"] #healthLogCard')).toHaveCount(1);
+
+  await page.locator('#modeFull').click();
+  await expect(healthCard).toBeVisible();
+  await expect(page.locator('#categories [data-checklist-group="diet"] #healthLogCard')).toHaveCount(1);
+});
+
 test('건강 기록과 루틴 기록의 저장 키 규칙이 분리되어 있음', async ({ page }) => {
   const [healthScript, appScript] = await Promise.all([
     page.request.get('/health-log.js').then(r => r.text()),
