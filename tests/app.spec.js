@@ -22,7 +22,7 @@ test('건강 기록 UI 요소가 페이지에 포함되어 있음', async ({ pag
 
 test('건강 기록을 저장하고 새로고침 후에도 유지함', async ({ page }) => {
   const date = '2026-01-17';
-  await page.locator('#healthDate').evaluate((el, value) => { el.value = value; }, date);
+  await page.locator('#healthDate').evaluate((el, value) => { el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); }, date);
   await page.locator('#hl-breakfast-food').fill('테스트 계란 2개');
   await page.locator('#hl-breakfast-kcal').fill('156');
   await page.locator('#healthNote').fill('자동 테스트 기록');
@@ -63,8 +63,10 @@ test('저장된 건강 기록을 수정하고 삭제할 수 있음', async ({ pa
   }, date);
   expect(saved.meals.lunch.food).toBe('수정된 테스트 닭가슴살');
 
+  const deleteButton = page.locator('[data-health-delete="' + date + '"]');
+  await expect(deleteButton).toHaveCount(1);
   page.once('dialog', dialog => dialog.accept());
-  await page.locator('[data-health-delete="' + date + '"]').click();
+  await deleteButton.click();
   saved = await page.evaluate((date) => {
     const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
     const all = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
