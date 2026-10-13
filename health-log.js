@@ -70,8 +70,7 @@ if(importInput&&applyImport){
     nextLogs[date]={...item,date,weight:item.weight??item.fastingWeight??"",note:item.note||"",meals:mealData,dailyTotals:total,foodFlags:{...ff,unprocessed:ff.unprocessed??ff.processed??"",noFlour:ff.noFlour??ff.powder??"",noSweets:ff.noSweets??ff.sweets??"",noFried:ff.noFried??ff.fried??""}};
    }
    const mergedGoals=data.goals&&typeof data.goals==="object"?{...goals,...data.goals}:goals;
-   localStorage.setItem(KEY,JSON.stringify(nextLogs));
-   localStorage.setItem(GOAL_KEY,JSON.stringify(mergedGoals));
+   const priorLogs=localStorage.getItem(KEY),priorGoals=localStorage.getItem(GOAL_KEY);try{localStorage.setItem(KEY,JSON.stringify({...logs,...nextLogs}));localStorage.setItem(GOAL_KEY,JSON.stringify({...goals,...mergedGoals}));}catch(writeError){try{if(priorLogs===null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,priorLogs);if(priorGoals===null)localStorage.removeItem(GOAL_KEY);else localStorage.setItem(GOAL_KEY,priorGoals)}catch{}throw writeError;}
    logs=nextLogs;goals=mergedGoals;
    fill($("healthDate").value||today());renderHistory();
    setImportStatus("반영 완료: "+dates.length+"일 ("+dates[0]+" ~ "+dates[dates.length-1]+") · 목표 설정 포함");window.dispatchEvent(new Event("lifeos-health-imported"));
