@@ -115,3 +115,93 @@ test('건강 기록과 루틴 기록의 저장 키 규칙이 분리되어 있음
   expect(healthScript).toContain('lifeos.health.logs.v1.');
   expect(appScript).toContain('lifeos.records.v1.');
 });
+
+
+test('전체 JSON 백업에 건강 기록과 건강 목표가 포함됨', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.health.logs.v1.project1', JSON.stringify({
+      '2026-10-14': { weight: 50.8, meals: { breakfast: { food: '테스트 닭가슴살' } } }
+    }));
+    localStorage.setItem('lifeos.health.goals.v1.project1', JSON.stringify({
+      targetWeightKg: 47, dailyTargets: { proteinG: 100 }
+    }));
+    localStorage.setItem('lifeos.health.logs.v1', JSON.stringify({
+      '2026-10-13': { weight: 51.0 }
+    }));
+    localStorage.setItem('lifeos.health.goals.v1', JSON.stringify({
+      targetWeightKg: 46
+    }));
+  });
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#exportJson').click();
+  const download = await downloadPromise;
+  const path = await download.path();
+  const fs = require('fs');
+  const backup = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+  expect(backup.version).toBe(3);
+  expect(backup.healthData.project1.logs['2026-10-14'].weight).toBe(50.8);
+  expect(backup.healthData.project1.goals.targetWeightKg).toBe(47);
+  expect(backup.legacyHealth['lifeos.health.logs.v1']['2026-10-13'].weight).toBe(51);
+  expect(backup.legacyHealth['lifeos.health.goals.v1'].targetWeightKg).toBe(46);
+});
+
+test('JSON 복원은 기존 건강 기록·목표를 보존하며 백업 내용을 병합함', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.health.logs.v1.project1', JSON.stringify({
+      '2026-10-01': { weight: 52 }, '2026-10-02': { weight: 51.5 }
+    }));
+    localStorage.setItem('lifeos.health.goals.v1.project1', JSON.stringify({
+      targetWeightKg: 46, dailyTargets: { proteinG: 100, carbsG: 100 }
+    }));
+  });
+  const backup = {
+    app: 'LIFE OS', version: 3,
+    records: { '2026-10-14': { tasks: {}, metrics: {} } },
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: { project1: { records: {}, settings: {}, groups: [] } },
+    healthData: {
+      project1: {
+        logs: { '2026-10-03': { weight: 50.8 } },
+        goals: { targetWeightKg: 47, dailyTargets: { proteinG: 110 } }
+      }
+    }
+  };
+  await page.locator('#importFile').setInputFiles({
+    name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+
+  const result = await page.evaluate(() => ({
+    logs: JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1')),
+    goals: JSON.parse(localStorage.getItem('lifeos.health.goals.v1.project1'))
+  }));
+  expect(result.logs['2026-10-01'].weight).toBe(52);
+  expect(result.logs['2026-10-02'].weight).toBe(51.5);
+  expect(result.logs['2026-10-03'].weight).toBe(50.8);
+  expect(result.goals.targetWeightKg).toBe(47);
+  expect(result.goals.dailyTargets.proteinG).toBe(110);
+  expect(result.goals.dailyTargets.carbsG).toBe(100);
+});
+
+test('잘못된 JSON 복원은 기존 건강 데이터와 목표를 변경하지 않음', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.health.logs.v1.project1', JSON.stringify({
+      '2026-10-01': { weight: 52 }
+    }));
+    localStorage.setItem('lifeos.health.goals.v1.project1', JSON.stringify({
+      targetWeightKg: 46
+    }));
+  });
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#importFile').setInputFiles({
+    name: 'invalid-backup.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"WRONG","records":{}}')
+  });
+  const result = await page.evaluate(() => ({
+    logs: JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1')),
+    goals: JSON.parse(localStorage.getItem('lifeos.health.goals.v1.project1'))
+  }));
+  expect(result.logs['2026-10-01'].weight).toBe(52);
+  expect(result.goals.targetWeightKg).toBe(46);
+});
