@@ -141,6 +141,7 @@ test('전체 JSON 백업에 건강 기록과 건강 목표가 포함됨', async 
       return originalCreateObjectURL(blob);
     };
   });
+  await page.locator('[data-tab="data"]').click();
   await page.locator('#exportJson').click();
   const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
 
