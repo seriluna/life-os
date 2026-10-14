@@ -133,12 +133,16 @@ test('전체 JSON 백업에 건강 기록과 건강 목표가 포함됨', async 
     }));
   });
 
-  const downloadPromise = page.waitForEvent('download');
+  await page.evaluate(() => {
+    window.__exportBlobText = null;
+    const originalCreateObjectURL = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = blob => {
+      window.__exportBlobText = blob.text();
+      return originalCreateObjectURL(blob);
+    };
+  });
   await page.locator('#exportJson').click();
-  const download = await downloadPromise;
-  const path = await download.path();
-  const fs = require('fs');
-  const backup = JSON.parse(fs.readFileSync(path, 'utf8'));
+  const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
 
   expect(backup.version).toBe(3);
   expect(backup.healthData.project1.logs['2026-10-14'].weight).toBe(50.8);
