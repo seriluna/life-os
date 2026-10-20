@@ -33,6 +33,7 @@
 .checklist-save-top{position:sticky;top:6px;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:10px 0 14px;border:1px solid #e8d9ed;border-radius:14px;background:rgba(255,250,253,.96);box-shadow:0 5px 18px #5a3d6610;backdrop-filter:blur(8px)}.checklist-save-top span{font-size:11px;color:var(--muted)}.checklist-save-top .btn{white-space:nowrap}.checklist-save-bottom .btn{width:100%;padding:14px;font-size:14px}.project-edit-savebar{position:sticky;bottom:8px;z-index:9;background:#fff8fc;padding:10px;border:1px solid #eadced;border-radius:14px;box-shadow:0 -4px 18px #5a3d6610}.project-edit-savebar #peSave{min-width:160px}
 
 .forbidden-checks{margin:12px 0 6px}.field-label{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px}.forbidden-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.forbidden-check{display:flex;align-items:center;gap:9px;min-height:54px;padding:10px;border-top:1px solid var(--line);font-size:13px;font-weight:650;color:var(--text)}.forbidden-check input{width:22px;height:22px;flex:0 0 22px;accent-color:#197a55}.forbidden-check span{overflow-wrap:anywhere}
+.category-heading{flex:1;min-width:0}.category-edit-button{padding:7px 10px;font-size:11px;white-space:nowrap}.category-title .pill{margin-left:auto}.edit-focus{outline:3px solid #f3c969;outline-offset:2;transition:outline .2s}.health-stats-card .metric-grid{margin:12px 0}.health-stats-table{width:100%;border-collapse:collapse;font-size:12px}.health-stats-table th,.health-stats-table td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:normal}.health-stats-table th{color:var(--muted)}.health-stats-bar{height:5px;background:#e8ede6;border-radius:99px;overflow:hidden;margin-top:4px}.health-stats-bar i{display:block;height:100%;background:var(--green)}
 </style>
 </head>
 <body>
@@ -83,6 +84,7 @@
 <div class="metric"><small>사업 결제액 누적</small><strong id="iRevenue">¥0</strong><span>입력한 결제액 합계</span></div>
 </div>
 <div class="card report-dashboard" style="margin-top:12px"><div class="section-head"><div><h2>리포트 · 수치 분석</h2><p>금일·금주·선택 기간의 실행 성과와 추세</p></div></div><div id="reportMetrics" class="metric-grid"></div><div class="report-chart-wrap"><h3>최근 7일 실행률 추이</h3><div id="weeklyTrendChart" class="weekly-trend-chart"></div></div><div class="report-chart-wrap"><h3>선택 기간 영역별 완료 행동 수</h3><div id="periodGroupChart"></div></div></div><div class="card analytics-card" style="margin-top:12px"><div class="section-head" style="margin-top:0"><div><h2>영역별 실행률</h2><p id="analyticsRangeCaption">선택한 기간의 실행 기록을 분석해.</p></div></div><div id="categoryBars"></div><div id="taskCalendar" class="card hidden"></div><button id="shareAchievement" type="button" class="btn secondary share-button">✦ 인스타그램용 성과 카드 만들기</button></div>
+<div class="card health-stats-card" id="healthStatsCard"><div class="section-head" style="margin-top:0"><div><h2>식단 · 몸무게 통계</h2><p>식단만, 몸무게만, 두 기록을 함께 비교해.</p></div></div><div class="fields"><div class="field"><label for="healthStatsMode">표시 항목</label><select id="healthStatsMode"><option value="both">몸무게 + 식단</option><option value="diet">식단만</option><option value="weight">몸무게만</option></select></div></div><div id="healthStatsSummary" class="metric-grid"></div><div id="healthStatsResults"><div class="empty">기록이 쌓이면 날짜별 통계가 표시돼.</div></div></div>
 <div class="insight" id="bottleneck"><strong>🔎 병목 분석</strong><p>기록이 쌓이면 개선할 영역을 찾아줄게.</p></div>
 <div class="card"><div class="section-head" style="margin-top:0"><div><h2>사업 결과</h2><p>활동량과 매출 결과를 별도로 추적</p></div></div><div class="metric-grid">
 <div class="metric"><small>고객 접촉</small><strong id="bContacts">0</strong><span>누적 기록</span></div>
@@ -110,5 +112,5 @@
 <div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
 </div>
 <div class="bottom hidden"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button></div></div>
-<script src="app.js?v=51"></script><script src="health-log.js?v=24"></script>
+<script src="app.js?v=52"></script><script src="health-log.js?v=25"></script>
 </body></html>
