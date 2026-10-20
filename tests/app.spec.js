@@ -266,3 +266,39 @@ test('저장 용량 초과 시 JSON 복원은 기존 데이터를 롤백해 보�
   expect(result.projectRecords).toEqual({ '2026-10-01': { metrics: { weight: 52 } } });
   expect(result.mainRecords['2026-10-20']).toBeUndefined();
 });
+
+
+test('JSON 복원 후 건강 기록이 화면과 목표 입력란에 표시됨', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3,
+    records: {},
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: { project1: { records: {}, settings: {}, groups: [] } },
+    healthData: {
+      project1: {
+        logs: {
+          '2026-10-19': {
+            date: '2026-10-19', weight: 50.4, note: '복원 화면 검증',
+            meals: { breakfast: { food: '복원 테스트 식사', kcal: 200, protein: 20 } },
+            dailyTotals: { kcal: 200, carbs: 10, protein: 20, fat: 5 }
+          }
+        },
+        goals: { targetWeightKg: 47, dailyTargets: { caloriesKcal: 1300, carbsG: 100, proteinG: 110, fatG: 40 } }
+      }
+    }
+  };
+
+  await page.locator('#importFile').setInputFiles({
+    name: 'ui-restore-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+
+  await expect(page.locator('#healthDate')).toHaveValue('2026-10-19');
+  await expect(page.locator('#hl-breakfast-food')).toHaveValue('복원 테스트 식사');
+  await expect(page.locator('#hl-goal-weight')).toHaveValue('47');
+  await expect(page.locator('#hl-goal-protein')).toHaveValue('110');
+
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#healthHistory')).toContainText('복원 테스트 식사');
+  await expect(page.locator('#healthHistory')).toContainText('50.4 kg');
+});
