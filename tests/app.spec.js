@@ -330,9 +330,12 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
     }
   };
 
-  await page.locator('#importFile').setInputFiles({
-    name: 'project-switch-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
-  });
+  await Promise.all([
+    page.waitForNavigation(),
+    page.locator('#importFile').setInputFiles({
+      name: 'project-switch-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+    })
+  ]);
 
   await page.locator('#healthDate').evaluate((el, value) => {
     el.value = value;
@@ -344,4 +347,16 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
   await page.locator('[data-tab="data"]').click();
   await expect(page.locator('#healthHistory')).toContainText('프로젝트 전환 식사');
   await expect(page.locator('#healthHistory')).toContainText('49.8 kg');
+
+  // After restore changes the active project, a fresh app state must save routine data to project2.
+  await page.locator('[data-task="contact"]').check();
+  await page.locator('#saveBtn').click();
+  const projectRecords = await page.evaluate(() => ({
+    project1: JSON.parse(localStorage.getItem('lifeos.records.v1.project1') || '{}'),
+    project2: JSON.parse(localStorage.getItem('lifeos.records.v1.project2') || '{}'),
+    active: localStorage.getItem('lifeos.activeProject.v1')
+  }));
+  expect(projectRecords.active).toBe('project2');
+  expect(projectRecords.project2['2026-10-20'].tasks.contact).toBe(true);
+  expect(projectRecords.project1['2026-10-20']).toBeUndefined();
 });
