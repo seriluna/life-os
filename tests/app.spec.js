@@ -363,3 +363,24 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
   // The app may initialize an empty record for today in the default project; it must not mark this task there.
   expect(projectRecords.project1['2026-10-20']?.tasks?.contact).not.toBe(true);
 });
+
+
+test('식단 입력 후 날짜를 바꿔도 자동 저장되어 기록이 유지됨', async ({ page }) => {
+  const date = '2026-10-19';
+  await page.locator('#healthDate').evaluate((el, value) => { el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); }, date);
+  await page.locator('#hl-breakfast-food').fill('자동 저장 테스트 닭가슴살 100g');
+  await page.locator('#hl-breakfast-food').evaluate(el => el.dispatchEvent(new Event('change', { bubbles: true })));
+  await page.locator('#healthDate').evaluate((el, value) => { el.value = value; el.dispatchEvent(new Event('change', { bubbles: true })); }, '2026-10-20');
+  const saved = await page.evaluate(date => { const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.')); return JSON.parse(localStorage.getItem(key) || '{}')[date] || null; }, date);
+  expect(saved).not.toBeNull();
+  expect(saved.meals.breakfast.food).toBe('자동 저장 테스트 닭가슴살 100g');
+});
+
+test('식단·몸무게 통계에서 세 가지 보기 모드를 제공함', async ({ page }) => {
+  await page.locator('[data-tab="insights"]').click();
+  await expect(page.locator('#healthStatsMode')).toHaveCount(1);
+  await expect(page.locator('#healthStatsMode option')).toHaveCount(3);
+  await page.locator('#healthStatsMode').selectOption('diet');
+  await page.locator('#healthStatsMode').selectOption('weight');
+  await page.locator('#healthStatsMode').selectOption('both');
+});
