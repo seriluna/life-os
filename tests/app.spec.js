@@ -348,6 +348,8 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
   await expect(page.locator('#healthHistory')).toContainText('프로젝트 전환 식사');
   await expect(page.locator('#healthHistory')).toContainText('49.8 kg');
 
+  // Return to the routine screen before interacting with its hidden checkboxes.
+  await page.locator('[data-tab="today"]').click();
   // After restore changes the active project, a fresh app state must save routine data to project2.
   await page.locator('[data-task="contact"]').check();
   await page.locator('#saveBtn').click();
