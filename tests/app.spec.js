@@ -360,5 +360,6 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
   }));
   expect(projectRecords.active).toBe('project2');
   expect(projectRecords.project2['2026-10-20'].tasks.contact).toBe(true);
-  expect(projectRecords.project1['2026-10-20']).toBeUndefined();
+  // The app may initialize an empty record for today in the default project; it must not mark this task there.
+  expect(projectRecords.project1['2026-10-20']?.tasks?.contact).not.toBe(true);
 });
