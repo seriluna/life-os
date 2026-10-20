@@ -120,3 +120,43 @@ No provider is selected yet. Regional reachability, current pricing, and data-re
 ## Current decision
 
 **Do not implement remote sync yet.** The next safe deliverable is a provider decision based on actual region/network access and current official pricing/security information. This document records the plan; it does not enable sync or change the deployed app.
+
+
+## 10. Initial provider research (20 October 2026)
+
+This is a preliminary desk review, not a final provider decision. Prices and quotas can change; re-check before provisioning.
+
+### Supabase
+- Official pricing page currently lists Free at $0 with 500 MB database per project, 5 GB egress, 1 GB file storage, and up to 50,000 monthly active users. Free projects may pause after one week of inactivity.
+- Official pricing page currently lists Pro from $25/month, including 8 GB disk per project, 250 GB egress, daily backups retained for 7 days, and 100,000 monthly active users.
+- Postgres fits the app's structured, date-based records and project-scoped data model. Supabase Auth plus Postgres Row Level Security (RLS) is a candidate for enforcing per-account isolation.
+- Before selecting it, verify the exact project region available for the account and run a real-network connectivity test from every intended target region, especially mainland China if it is in scope.
+
+Official references:
+- https://supabase.com/pricing
+- https://supabase.com/docs/guides/database/postgres/row-level-security
+- https://supabase.com/docs/guides/platform/regions
+
+### Firebase
+- Firestore has a free quota for one database per project: 1 GiB stored data, 50,000 document reads/day, 20,000 writes/day, 20,000 deletes/day, and 10 GiB/month outbound transfer. Usage beyond the included quota is billed according to location and operation type.
+- Firebase product locations are configured per product/resource; there is no single global project location. Some product/resource location settings are immutable after provisioning, so region selection must happen before creating resources.
+- Firebase Authentication + Firestore Security Rules is a candidate. The rules and query patterns need automated tests proving that one account cannot read or change another account's records.
+- Before selecting it, verify all required services' available regions and test real-network connectivity from intended target regions.
+
+Official references:
+- https://firebase.google.com/docs/firestore/pricing
+- https://firebase.google.com/docs/projects/locations
+- https://firebase.google.com/docs/rules
+
+### Preliminary assessment
+- **Best technical fit to prototype first: Supabase**, because its relational PostgreSQL model maps naturally to projects, dated records, settings, and health logs, and its RLS can express owner-scoped access policies.
+- **This is not yet approval to provision or implement it.** Actual regional connectivity, suitable data region/privacy terms, and the final cost must be verified first. The current app's user geography and expected number of users have not been confirmed, so a definitive provider choice would be premature.
+- No account, database, SDK, secret, or production data has been created or changed by this research.
+
+### Decision gate
+Before implementation:
+1. Confirm intended user regions, including whether mainland China must be supported.
+2. Test the GitHub Pages app and candidate provider endpoints on the actual target networks/devices.
+3. Confirm region, privacy/data-processing terms, account recovery, export and deletion behavior.
+4. Approve a provider and a written schema/conflict policy.
+5. Implement a local repository interface in a separate PR before enabling any remote writes.
