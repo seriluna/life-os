@@ -307,3 +307,41 @@ test('JSON 복원 후 건강 기록이 화면과 목표 입력란에 표시됨',
   await expect(page.locator('#healthHistory')).toContainText('복원 테스트 식사');
   await expect(page.locator('#healthHistory')).toContainText('50.4 kg');
 });
+
+
+test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 건강 기록을 즉시 표시함', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3,
+    records: {},
+    projects: [{ id: 'project2', name: '복원 프로젝트', startDate: '', targetDate: '' }],
+    activeProjectId: 'project2',
+    projectData: { project2: { records: {}, settings: {}, groups: [] } },
+    healthData: {
+      project2: {
+        logs: {
+          '2026-10-18': {
+            date: '2026-10-18', weight: 49.8, note: '활성 프로젝트 전환 테스트',
+            meals: { breakfast: { food: '프로젝트 전환 식사', kcal: 180, protein: 18 } },
+            dailyTotals: { kcal: 180, carbs: 12, protein: 18, fat: 4 }
+          }
+        },
+        goals: { targetWeightKg: 46, dailyTargets: { caloriesKcal: 1250, carbsG: 95, proteinG: 105, fatG: 38 } }
+      }
+    }
+  };
+
+  await page.locator('#importFile').setInputFiles({
+    name: 'project-switch-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+
+  await page.locator('#healthDate').evaluate((el, value) => {
+    el.value = value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, '2026-10-18');
+  await expect(page.locator('#hl-breakfast-food')).toHaveValue('프로젝트 전환 식사');
+  await expect(page.locator('#hl-goal-weight')).toHaveValue('46');
+  await expect(page.locator('#hl-goal-protein')).toHaveValue('105');
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#healthHistory')).toContainText('프로젝트 전환 식사');
+  await expect(page.locator('#healthHistory')).toContainText('49.8 kg');
+});
