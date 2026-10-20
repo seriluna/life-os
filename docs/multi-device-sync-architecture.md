@@ -160,3 +160,43 @@ Before implementation:
 3. Confirm region, privacy/data-processing terms, account recovery, export and deletion behavior.
 4. Approve a provider and a written schema/conflict policy.
 5. Implement a local repository interface in a separate PR before enabling any remote writes.
+
+
+## 11. Target geography: Korea, mainland China, and international users (20 October 2026)
+
+The product target is now confirmed as South Korea + mainland China + other international markets. This changes the decision: a provider's advertised global regions do not prove that its login and API endpoints are reliably reachable from mainland China. Do not make a region-wide accessibility claim without real tests on target networks.
+
+### Candidate posture
+- Keep Supabase as the first technical prototype candidate because the current data is naturally relational (projects, date-keyed records, settings, goals) and Postgres RLS can enforce per-owner row access.
+- Keep Firebase as a comparison candidate, especially for its managed authentication and Firestore rules, but test its Auth and database endpoints separately.
+- Neither provider is approved for production yet. Supabase has published a 2026 report about regional network blocks affecting its domains; this is evidence that network reachability can vary by country/ISP, not evidence by itself of a China-specific block.
+- Firebase documents Seoul, Tokyo, Singapore, and Hong Kong Firestore regions. A nearby data region can help latency but does not establish service reachability or legal suitability. The chosen Firestore location is immutable after database creation.
+
+### Practical network verification plan
+Run tests from real target networks/devices, not from one cloud runner only:
+1. South Korea: one fixed broadband/Wi-Fi network and one mobile carrier.
+2. Mainland China: at least two independent networks if available (e.g., home/office broadband and mobile data), without assuming VPN use.
+3. International: at least one target market outside Korea/China (choose the actual first launch market).
+4. For each provider test separately: static app load; sign-up; email/OTP delivery and verification; sign-in/session refresh; small synthetic record write/read/update/delete; sign-out; repeat after switching Wi-Fi/mobile network.
+5. Repeat at different times of day over several days. Record timestamp, country/region, ISP/carrier, device/browser, DNS/connection result, HTTP status/latency, auth success, CRUD success, and whether retries recovered.
+6. Never test with real health records. Use synthetic records only. Do not upload user data until provider, region, privacy terms, and account isolation are approved.
+
+### Acceptance gates (provisional)
+- Static app and authentication flows complete successfully in every target region/network under test.
+- Synthetic CRUD and session refresh pass in each region; transient failures recover safely without duplicate records or lost local data.
+- Target-network testing spans at least 3 days and two independent mainland China network paths where feasible. Any persistent failure blocks production selection until mitigated and retested.
+- Automated authorization tests prove account A cannot read, update, or delete account B's records.
+- Region, subprocessors, backup locations, retention/deletion, export, and legal/privacy requirements are reviewed before real data is enabled.
+
+### Fallback strategy
+- Keep the current local-only mode and JSON export/restore as a working fallback.
+- If one provider fails mainland China connectivity tests, do not route around regional restrictions or promise availability. Compare a compliant China-accessible deployment option and its local hosting/legal requirements, or explicitly limit sync availability by region while preserving local-only use.
+- Avoid multi-cloud writes or dual-primary databases in the MVP; they increase conflict, privacy, and operational complexity. Revisit only if a single-provider design cannot meet verified requirements.
+
+### Updated implementation sequence
+- [ ] Define the first international launch market and test devices/networks.
+- [ ] Perform the multi-region synthetic connectivity test for both candidates.
+- [ ] Compare final provider price, region, privacy/DPA, and data deletion/export terms.
+- [ ] Record a provider decision with evidence and failure thresholds.
+- [ ] Build/test the local repository interface in a separate PR.
+- [ ] Only after approval, provision a test project and add opt-in sync using synthetic data.
