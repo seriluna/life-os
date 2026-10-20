@@ -210,3 +210,59 @@ test('잘못된 JSON 복원은 기존 건강 데이터와 목표를 변경하지
   expect(result.logs['2026-10-01'].weight).toBe(52);
   expect(result.goals.targetWeightKg).toBe(46);
 });
+
+
+test('저장 용량 초과 시 JSON 복원은 기존 데이터를 롤백해 보존함', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.health.logs.v1.project1', JSON.stringify({
+      '2026-10-01': { weight: 52 }
+    }));
+    localStorage.setItem('lifeos.health.goals.v1.project1', JSON.stringify({
+      targetWeightKg: 46, dailyTargets: { proteinG: 100 }
+    }));
+    localStorage.setItem('lifeos.records.v1.project1', JSON.stringify({
+      '2026-10-01': { metrics: { weight: 52 } }
+    }));
+  });
+
+  const backup = {
+    app: 'LIFE OS', version: 3,
+    records: { '2026-10-20': { tasks: {}, metrics: { weight: 49 } } },
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: { project1: { records: { '2026-10-20': { metrics: { weight: 49 } } } } },
+    healthData: {
+      project1: {
+        logs: { '2026-10-20': { weight: 49 } },
+        goals: { targetWeightKg: 45, dailyTargets: { proteinG: 120 } }
+      }
+    }
+  };
+
+  await page.evaluate(() => {
+    const originalSetItem = Storage.prototype.setItem;
+    let shouldFail = true;
+    Storage.prototype.setItem = function(key, value) {
+      if (shouldFail && key === 'lifeos.health.goals.v1.project1') {
+        shouldFail = false;
+        throw new DOMException('Quota exceeded', 'QuotaExceededError');
+      }
+      return originalSetItem.call(this, key, value);
+    };
+  });
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#importFile').setInputFiles({
+    name: 'quota-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+
+  const result = await page.evaluate(() => ({
+    healthLogs: JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1')),
+    healthGoals: JSON.parse(localStorage.getItem('lifeos.health.goals.v1.project1')),
+    projectRecords: JSON.parse(localStorage.getItem('lifeos.records.v1.project1')),
+    mainRecords: JSON.parse(localStorage.getItem('lifeos.records.v1') || '{}')
+  }));
+  expect(result.healthLogs).toEqual({ '2026-10-01': { weight: 52 } });
+  expect(result.healthGoals).toEqual({ targetWeightKg: 46, dailyTargets: { proteinG: 100 } });
+  expect(result.projectRecords).toEqual({ '2026-10-01': { metrics: { weight: 52 } } });
+  expect(result.mainRecords['2026-10-20']).toBeUndefined();
+});
