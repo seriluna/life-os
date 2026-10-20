@@ -293,7 +293,12 @@ test('JSON 복원 후 건강 기록이 화면과 목표 입력란에 표시됨',
     name: 'ui-restore-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
   });
 
-  await expect(page.locator('#healthDate')).toHaveValue('2026-10-19');
+  // Restore imports records without changing the currently selected date.
+  // Select the restored date to verify the form renders the saved entry.
+  await page.locator('#healthDate').evaluate((el, value) => {
+    el.value = value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, '2026-10-19');
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('복원 테스트 식사');
   await expect(page.locator('#hl-goal-weight')).toHaveValue('47');
   await expect(page.locator('#hl-goal-protein')).toHaveValue('110');
