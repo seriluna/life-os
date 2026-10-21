@@ -693,3 +693,70 @@ test('목표 설정은 일일 기록 저장과 분리되어 날짜가 바뀌어�
   await expect(page.locator('#hl-goal-calories')).toHaveValue('1400');
   await expect(page.locator('#hl-goal-protein')).toHaveValue('110');
 });
+
+
+test('프로젝트 대시보드는 기간 시각화와 연도별 필터를 제공함', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.projects.v1', JSON.stringify([
+      { id: 'project1', name: '2025-26 프로젝트', description: '연도 필터 테스트', startDate: '2025-11-01', targetDate: '2026-02-15' },
+      { id: 'project2', name: '2027 프로젝트', description: '미래 프로젝트', startDate: '2027-01-01', targetDate: '2027-12-31' }
+    ]));
+    localStorage.setItem('lifeos.activeProject.v1', 'project1');
+  });
+  await page.reload();
+
+  await expect(page.locator('#projectDashboard')).toBeVisible();
+  await expect(page.locator('#projectList')).toContainText('2025-26 프로젝트');
+  await expect(page.locator('#projectList')).toContainText('2027 프로젝트');
+  await expect(page.locator('#projectYearFilter option[value="2025"]')).toHaveCount(1);
+  await expect(page.locator('#projectYearFilter option[value="2026"]')).toHaveCount(1);
+  await expect(page.locator('#projectYearFilter option[value="2027"]')).toHaveCount(1);
+  await expect(page.locator('#projectDashboardMetrics')).toContainText('표시 프로젝트');
+
+  await page.locator('#projectYearFilter').selectOption('2026');
+  await expect(page.locator('#projectList')).toContainText('2025-26 프로젝트');
+  await expect(page.locator('#projectList')).not.toContainText('2027 프로젝트');
+  await expect(page.locator('#projectList .project-progress-track')).toHaveCount(1);
+
+  await page.locator('#projectYearFilter').selectOption('2027');
+  await expect(page.locator('#projectList')).toContainText('2027 프로젝트');
+  await expect(page.locator('#projectList')).not.toContainText('2025-26 프로젝트');
+});
+
+test('목표 설정은 접을 수 있고 저장 동작을 유지함', async ({ page }) => {
+  const panel = page.locator('#goalSettingsPanel');
+  await expect(panel).toBeVisible();
+  await expect(panel).not.toHaveAttribute('open', '');
+  await panel.locator('summary').click();
+  await expect(page.locator('#goalCarbs')).toBeVisible();
+  await page.locator('#goalCarbs').fill('125');
+  await page.locator('#saveSettings').click();
+  const settings = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find(k => k.startsWith('lifeos.settings.v1.'));
+    return key ? JSON.parse(localStorage.getItem(key)) : null;
+  });
+  expect(settings.carbs).toBe(125);
+});
+
+test('전체 백업 파일은 먼저 미리보기하고 취소할 수 있음', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3,
+    records: { '2026-10-20': { tasks: {}, metrics: {} } },
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: { project1: { records: {}, settings: {}, groups: [] } },
+    healthData: { project1: { logs: {}, goals: {} } }
+  };
+  await page.locator('#importFile').setInputFiles({
+    name: 'life-os-backup-test.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup))
+  });
+  await expect(page.locator('#backupFilePreview')).toContainText('life-os-backup-test.json');
+  await expect(page.locator('#backupFilePreview')).toContainText('전체 백업 형식 확인 완료');
+  await expect(page.locator('#restoreJson')).toBeEnabled();
+
+  await page.locator('#cancelRestore').click();
+  await expect(page.locator('#restoreJson')).toBeDisabled();
+  await expect(page.locator('#backupFilePreview')).toContainText('아직 파일을 선택하지 않았어');
+});
