@@ -111,6 +111,7 @@ test('날짜를 바꿔도 건강 기록 카드가 식단 영역에 유지됨', a
   const healthCard = page.locator('#healthLogCard');
   await expect(healthCard).toBeVisible();
 
+  await page.locator('[data-tab="today"]').click();
   await page.locator('#recordDate').fill('2026-10-15');
   await page.locator('#recordDate').dispatchEvent('change');
 
