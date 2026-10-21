@@ -872,3 +872,30 @@ test('성과 리포트는 연속 기록과 별개로 프로젝트 전체 완료 
   await expect(page.locator('#dailyReportContent')).toContainText('연속 기록 일수가 아니라 프로젝트 전체 기간');
   await expect(page.locator('#dailyReportContent')).toContainText('다음 성취 기준은 10회');
 });
+
+
+test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변경하지 않음', async ({ page }) => {
+  const picker = page.locator('#homeStatsPicker');
+  await expect(picker).toBeVisible();
+  await expect(picker.locator('option:checked')).toHaveCount(3);
+
+  const recordKey = 'lifeos.records.v1.project1';
+  const syntheticRecords = {
+    '2026-10-20': { tasks: { contact: true }, metrics: { weight: 50.2 }, reflection: { win: '합성 기록 유지 확인' } }
+  };
+  await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), { key: recordKey, value: syntheticRecords });
+
+  await picker.selectOption(['streak']);
+  await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
+  await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
+  await expect(page.locator('[data-home-stat="monthRate"]')).toBeHidden();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.homeStats.v1') || '[]'))).toEqual(['streak']);
+
+  await page.reload();
+  await expect(page.locator('#homeStatsPicker option:checked')).toHaveCount(1);
+  await expect(page.locator('#homeStatsPicker option:checked')).toHaveValue('streak');
+  await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
+  await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
+  const savedRecords = await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '{}'), recordKey);
+  expect(savedRecords).toEqual(syntheticRecords);
+});
