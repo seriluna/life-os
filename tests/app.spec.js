@@ -310,6 +310,10 @@ test('JSON 복원 후 건강 기록이 화면과 목표 입력란에 표시됨',
 
 
 test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 건강 기록을 즉시 표시함', async ({ page }) => {
+  const today = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const backup = {
     app: 'LIFE OS', version: 3,
     records: {},
@@ -359,9 +363,9 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
     active: localStorage.getItem('lifeos.activeProject.v1')
   }));
   expect(projectRecords.active).toBe('project2');
-  expect(projectRecords.project2['2026-10-20'].tasks.contact).toBe(true);
+  expect(projectRecords.project2[today].tasks.contact).toBe(true);
   // The app may initialize an empty record for today in the default project; it must not mark this task there.
-  expect(projectRecords.project1['2026-10-20']?.tasks?.contact).not.toBe(true);
+  expect(projectRecords.project1[today]?.tasks?.contact).not.toBe(true);
 });
 
 
@@ -383,4 +387,58 @@ test('식단·몸무게 통계에서 세 가지 보기 모드를 제공함', asy
   await page.locator('#healthStatsMode').selectOption('diet');
   await page.locator('#healthStatsMode').selectOption('weight');
   await page.locator('#healthStatsMode').selectOption('both');
+});
+
+
+test('실행 항목 삭제는 범위를 선택하면 즉시 저장됨', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  const deleteButton = page.locator('#groupEditorList [data-delete-action]').first();
+  const beforeCount = await page.locator('#groupEditorList [data-delete-action]').count();
+  await expect(deleteButton).toBeVisible();
+  await deleteButton.click();
+
+  const dialog = page.locator('#taskScopeDialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('선택한 날짜만')).toBeVisible();
+  await expect(dialog.getByText('직접 지정한 기간만')).toBeVisible();
+  await expect(dialog.getByText('프로젝트 전체 기간')).toBeVisible();
+  await dialog.locator('[name="scopeMode"][value="date"]').check();
+  await dialog.locator('button[type="submit"]').click();
+
+  const scopeData = await page.evaluate(() => {
+    const raw = localStorage.getItem('lifeos.checklist.taskScopes.v1.project1');
+    return raw ? JSON.parse(raw) : null;
+  });
+  expect(scopeData).not.toBeNull();
+  expect(Object.keys(scopeData).length).toBeGreaterThan(0);
+  const ranges = Object.values(scopeData)[0];
+  expect(ranges).toHaveLength(1);
+  expect(ranges[0].startDate).toBe(ranges[0].endDate);
+  await page.reload();
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#groupEditorList [data-delete-action]')).toHaveCount(beforeCount);
+});
+
+test('실행 항목 이름 수정은 지정한 기간에만 적용하고 즉시 저장됨', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  const editButton = page.locator('#groupEditorList [data-edit-action]').first();
+  await expect(editButton).toBeVisible();
+  page.once('dialog', dialog => dialog.accept('기간 한정 수정 항목'));
+  await editButton.click();
+
+  const dialog = page.locator('#taskScopeDialog');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('[name="scopeMode"][value="range"]').check();
+  await dialog.locator('#taskScopeStart').fill('2026-10-01');
+  await dialog.locator('#taskScopeEnd').fill('2026-10-10');
+  await dialog.locator('button[type="submit"]').click();
+
+  const saved = await page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    const history = JSON.parse(localStorage.getItem('lifeos.checklist.labelHistory.v1.project1') || '{}');
+    const taskId = groups[0].tasks[0][0];
+    return { task: groups[0].tasks.find(t => t[0] === taskId), history: history[taskId] };
+  });
+  expect(saved.task[1]).toBe('기간 한정 수정 항목');
+  expect(saved.history.changes.some(c => c.date === '2026-10-01' && c.endDate === '2026-10-10' && c.label === '기간 한정 수정 항목')).toBe(true);
 });
