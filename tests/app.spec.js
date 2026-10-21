@@ -547,7 +547,7 @@ test('JSON 백업과 복원은 실행 항목 추가 범위도 보존함', async 
   const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
   expect(backup.projectData.project1.taskActiveScopes.scopedTask[0].startDate).toBe('2026-10-01');
 
-  await page.locator('#importFile').setInputFiles({
+  await restoreBackup(page, {
     name: 'scoped-add-backup.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(backup))
@@ -569,7 +569,7 @@ test('같은 프로젝트에 JSON 복원하면 체크리스트 화면도 즉시 
     }
   };
 
-  await page.locator('#importFile').setInputFiles({
+  await restoreBackup(page, {
     name: 'restore-checklist.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
   });
 
@@ -592,7 +592,7 @@ test('JSON 복원은 기간별 실행 항목 수정·삭제 설정도 보존함'
       }
     }
   };
-  await page.locator('#importFile').setInputFiles({
+  await restoreBackup(page, {
     name: 'scoped-checklist-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
   });
   const result = await page.evaluate(() => ({
