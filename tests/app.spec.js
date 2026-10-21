@@ -107,6 +107,17 @@ test('화면을 다시 그려도 건강 기록 카드가 식단 영역에 유지
   await expect(page.locator('#categories [data-checklist-group="diet"] #healthLogCard')).toHaveCount(1);
 });
 
+test('날짜를 바꿔도 건강 기록 카드가 식단 영역에 유지됨', async ({ page }) => {
+  const healthCard = page.locator('#healthLogCard');
+  await expect(healthCard).toBeVisible();
+
+  await page.locator('#recordDate').fill('2026-10-15');
+  await page.locator('#recordDate').dispatchEvent('change');
+
+  await expect(healthCard).toBeVisible();
+  await expect(page.locator('#categories [data-checklist-group="diet"] #healthLogCard')).toHaveCount(1);
+});
+
 test('건강 기록과 루틴 기록의 저장 키 규칙이 분리되어 있음', async ({ page }) => {
   const [healthScript, appScript] = await Promise.all([
     page.request.get('/health-log.js').then(r => r.text()),
@@ -466,6 +477,29 @@ test('JSON 백업에 기간별 실행 항목 수정·삭제 설정이 포함됨'
   const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
   expect(backup.projectData.project1.labelHistory.contact.changes[0].label).toBe('기간 한정 연락');
   expect(backup.projectData.project1.taskScopes.marketing[0].startDate).toBe('2026-10-05');
+});
+
+test('같은 프로젝트에 JSON 복원하면 체크리스트 화면도 즉시 갱신됨', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3, records: {},
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: {
+      project1: {
+        records: {},
+        groups: [{ id: 'restored', name: '복원된 영역', icon: '📌', desc: '복원 테스트', tasks: [['restoredTask', '복원된 실행 항목']] }]
+      }
+    }
+  };
+
+  await page.locator('#importFile').setInputFiles({
+    name: 'restore-checklist.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+
+  await expect(page.locator('[data-checklist-group="restored"]')).toContainText('복원된 영역');
+  await expect(page.locator('[data-task="restoredTask"]')).toBeVisible();
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#groupEditorList')).toContainText('복원된 실행 항목');
 });
 
 test('JSON 복원은 기간별 실행 항목 수정·삭제 설정도 보존함', async ({ page }) => {
