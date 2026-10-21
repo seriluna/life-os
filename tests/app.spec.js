@@ -893,15 +893,15 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
 });
 
 test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 지원함', async ({ page }) => {
-  await expect(page.locator('#calendarTaskPicker input[data-calendar-task]')).toHaveCount(21);
+  await expect(page.locator('#calendarTaskPicker input[data-calendar-task]')).toHaveCount(23);
   await page.locator('#calendarClearAll').click();
   await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(0);
   await expect(page.locator('#multiTaskCalendar')).toContainText('항목을 선택하면');
   await page.locator('#calendarTaskPicker input[data-calendar-task="contact"]').check();
   await expect(page.locator('#multiTaskCalendar')).toContainText('contact');
   await page.locator('#calendarSelectAll').click();
-  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(21);
+  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(23);
   await expect(page.locator('#multiTaskCalendar table')).toBeVisible();
   await page.reload();
-  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(21);
+  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(23);
 });
