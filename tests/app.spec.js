@@ -668,3 +668,28 @@ test('백업 복원은 파일 형식 확인 후 명시적으로 복원할 때만
   await expect(page.locator('#restoreJson')).toBeDisabled();
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.records.v1.project1') || '{}')['2026-10-20'].metrics.weight)).toBe(49);
 });
+
+test('목표 설정은 일일 기록 저장과 분리되어 날짜가 바뀌어도 유지됨', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  await page.locator('#goalSettingsPanel > summary').click();
+  await page.locator('#hl-goal-weight').fill('47.5');
+  await page.locator('#hl-goal-calories').fill('1400');
+  await page.locator('#hl-goal-protein').fill('110');
+  await page.locator('#saveHealthGoals').click();
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.health.goals.v1.project1') || '{}'));
+  expect(saved.targetWeightKg).toBe(47.5);
+  expect(saved.dailyTargets.caloriesKcal).toBe(1400);
+  expect(saved.dailyTargets.proteinG).toBe(110);
+
+  await page.locator('[data-tab="today"]').click();
+  await page.locator('#healthDate').evaluate(el => {
+    el.value = '2026-10-01';
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.locator('[data-tab="data"]').click();
+  await page.locator('#goalSettingsPanel > summary').click();
+  await expect(page.locator('#hl-goal-weight')).toHaveValue('47.5');
+  await expect(page.locator('#hl-goal-calories')).toHaveValue('1400');
+  await expect(page.locator('#hl-goal-protein')).toHaveValue('110');
+});
