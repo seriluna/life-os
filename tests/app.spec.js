@@ -807,10 +807,10 @@ test('서비스워커가 HTML에서 참조하는 현재 스크립트 버전을 �
     const response = await fetch('./sw.js', { cache: 'no-store' });
     return response.text();
   });
-  expect(scriptVersions.app).toBe('app.js?v=58');
-  expect(scriptVersions.health).toBe('health-log.js?v=28');
-  expect(serviceWorker).toContain('"./app.js?v=58"');
-  expect(serviceWorker).toContain('"./health-log.js?v=28"');
+  expect(scriptVersions.app).toBe('app.js?v=60');
+  expect(scriptVersions.health).toBe('health-log.js?v=29');
+  expect(serviceWorker).toContain('"./app.js?v=60"');
+  expect(serviceWorker).toContain('"./health-log.js?v=29"');
 });
 
 
@@ -851,4 +851,221 @@ test('체크인 자동 저장 실패를 알리고 기존 루틴 기록을 보존
   const preserved = await page.evaluate(({ key, date }) => JSON.parse(localStorage.getItem(key) || '{}')[date], { key, date });
   expect(preserved.reflection.win).toBe('기존 회고');
   expect(preserved.metrics.weight).toBe(51.2);
+});
+
+ 
+test('성과 리포트는 연속 기록과 별개로 프로젝트 전체 완료 행동 수를 축하함', async ({ page }) => {
+  const today = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  await page.evaluate((today) => {
+    const key = 'lifeos.records.v1.project1';
+    const previous = JSON.parse(localStorage.getItem(key) || '{}');
+    previous['2026-01-02'] = { tasks: { contact: true, marketing: true }, metrics: {}, reflection: {} };
+    previous[today] = { tasks: { contact: true }, metrics: {}, reflection: {} };
+    localStorage.setItem(key, JSON.stringify(previous));
+    records = previous;
+    renderDailyReport();
+  }, today);
+  await expect(page.locator('#dailyReportContent')).toContainText('프로젝트 누적 성취 · 3회 완료');
+  await expect(page.locator('#dailyReportContent')).toContainText('연속 기록 일수가 아니라 프로젝트 전체 기간');
+  await expect(page.locator('#dailyReportContent')).toContainText('다음 성취 기준은 10회');
+});
+
+
+test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변경하지 않음', async ({ page }) => {
+  const picker = page.locator('#homeStatsPicker');
+  await expect(picker).toBeVisible();
+  await expect(picker.locator('option:checked')).toHaveCount(3);
+
+  await picker.selectOption(['streak']);
+  await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
+  await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
+  await expect(page.locator('[data-home-stat="monthRate"]')).toBeHidden();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.homeStats.v1') || '[]'))).toEqual(['streak']);
+
+  await page.reload();
+  await expect(page.locator('#homeStatsPicker option:checked')).toHaveCount(1);
+  await expect.poll(() => page.locator('#homeStatsPicker').evaluate(el => Array.from(el.selectedOptions).map(option => option.value))).toEqual(['streak']);
+  await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
+  await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
+});
+
+test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 지원함', async ({ page }) => {
+  await page.locator('[data-tab="insights"]').click();
+  await expect(page.locator('[data-tab="insights"]')).toHaveClass(/active/);
+  const options = page.locator('#calendarTaskPicker input[data-calendar-task]');
+  await expect(options.first()).toBeVisible();
+  const count = await options.count();
+  expect(count).toBeGreaterThan(0);
+  await page.locator('#calendarClearAll').click();
+  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(0);
+  await expect(page.locator('#multiTaskCalendar')).toContainText('항목을 선택하면');
+  await options.first().check();
+  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(1);
+  await expect(page.locator('#multiTaskCalendar table')).toBeVisible();
+  await page.locator('#calendarSelectAll').click();
+  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(count);
+  const savedSelection = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'));
+  expect(savedSelection).toHaveLength(count);
+  await page.reload();
+  await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(count);
+});
+
+test('달력 선택 설정은 프로젝트마다 독립적으로 저장됨', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.projects.v1', JSON.stringify([
+      { id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' },
+      { id: 'project2', name: '프로젝트 2', startDate: '', targetDate: '' }
+    ]));
+    localStorage.setItem('lifeos.activeProject.v1', 'project1');
+    localStorage.removeItem('lifeos.calendarTasks.v1.project1');
+    localStorage.removeItem('lifeos.calendarTasks.v1.project2');
+    localStorage.removeItem('lifeos.calendarTasks.v1');
+  });
+  await page.reload();
+  await page.locator('[data-tab="insights"]').click();
+  const project1Options = page.locator('#calendarTaskPicker input[data-calendar-task]');
+  await expect(project1Options.first()).toBeVisible();
+  await page.locator('#calendarClearAll').click();
+  await project1Options.first().check();
+  const project1Selection = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'));
+  expect(project1Selection).toHaveLength(1);
+
+  await page.locator('#projectPicker').selectOption('project2');
+  await expect(page.locator('#projectPicker')).toHaveValue('project2');
+  await page.locator('[data-tab="insights"]').click();
+  const project2Options = page.locator('#calendarTaskPicker input[data-calendar-task]');
+  await expect(project2Options.first()).toBeVisible();
+  await page.locator('#calendarClearAll').click();
+  await project2Options.first().check();
+  const result = await page.evaluate(() => ({
+    project1: JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'),
+    project2: JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project2') || '[]')
+  }));
+  expect(result.project1).toEqual(project1Selection);
+  expect(result.project2).toHaveLength(1);
+});
+ 
+test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유지됨', async ({ page }) => {
+  await page.locator('[data-tab="today"]').click();
+  await page.locator('details.json-disclosure summary').click();
+  const json = {date:'2026-10-21',meals:{breakfast:{food:'테스트 계란',kcal:100,carbs:2,protein:8,fat:5},lunch:{food:'테스트 닭가슴살',kcal:200,carbs:0,protein:40,fat:3},dinner:{food:'',kcal:0,carbs:0,protein:0,fat:0}}};
+  await page.locator('#dietJsonPaste').fill(JSON.stringify(json));
+  await page.locator('#applyDietJson').click();
+  await expect(page.locator('#dietJsonStatus')).toContainText('자동 저장');
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1') || '{}'));
+  expect(saved['2026-10-21'].meals.breakfast.food).toBe('테스트 계란');
+  await page.reload();
+  await page.locator('[data-tab="today"]').click();
+  await expect(page.locator('#hl-breakfast-food')).toHaveValue('테스트 계란');
+});
+
+test('식단 입력란 비우기 기능은 표시하지 않음', async ({ page }) => {
+  await page.locator('[data-tab="today"]').click();
+  await expect(page.locator('#clearHealthForm')).toHaveCount(0);
+  await expect(page.locator('#exportHealthCsv')).toBeVisible();
+});
+test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저장하고 복원함', async ({ page }) => {
+  await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(0).check();
+  await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(1).check();
+  await page.locator('#reflectionBlockerOptions input[type="checkbox"]').nth(2).check();
+  await page.locator('#reflectionWinCustom').fill('고객 인터뷰 완료');
+  await page.locator('[data-add-reflection-option="win"]').click();
+  await expect(page.locator('#reflectionWinOptions')).toContainText('고객 인터뷰 완료');
+  await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
+  await page.reload();
+  await expect(page.locator('#reflectionWinOptions')).toContainText('고객 인터뷰 완료');
+  await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
+  await expect(page.locator('#reflectionBlockerOptions input:checked')).toHaveCount(1);
+});
+
+
+test('프로젝트 편집에서 기본·사용자 정의 회고 선택지를 추가·수정·삭제하고 저장함', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  await page.locator('#projectList [data-edit-project]').first().click();
+  await expect(page.locator('#peReflectionWinOptions')).toBeVisible();
+  await page.locator('#peReflectionWinOptions input[data-pe-reflection-name="win"]').first().fill('수정한 기본 성과 선택지');
+  await page.locator('#peReflectionWinNew').fill('추가한 성과 선택지');
+  await page.locator('#peReflectionWinAdd').click();
+  await page.locator('#peReflectionWinNew').fill('삭제할 성과 선택지');
+  await page.locator('#peReflectionWinAdd').click();
+  await page.locator('#peReflectionWinOptions [data-pe-reflection-delete="win"]').last().click();
+  await expect(page.locator('#peReflectionWinOptions')).not.toContainText('삭제할 성과 선택지');
+  await page.locator('#peReflectionBlockerOptions input[data-pe-reflection-name="blocker"]').first().fill('수정한 기본 병목 선택지');
+  await page.locator('#peReflectionBlockerNew').fill('테스트 병목 선택지');
+  await page.locator('#peReflectionBlockerAdd').click();
+  await page.locator('#peSave').click();
+  await expect(page.locator('#peStatus')).toContainText('저장 완료');
+  await page.locator('[data-tab="today"]').click();
+  await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 기본 성과 선택지');
+  await expect(page.locator('#reflectionWinOptions')).toContainText('추가한 성과 선택지');
+  await expect(page.locator('#reflectionWinOptions')).not.toContainText('핵심 업무를 완료했어');
+  await expect(page.locator('#reflectionWinOptions')).not.toContainText('삭제할 성과 선택지');
+  await expect(page.locator('#reflectionBlockerOptions')).toContainText('수정한 기본 병목 선택지');
+  await expect(page.locator('#reflectionBlockerOptions')).toContainText('테스트 병목 선택지');
+  await page.reload();
+  await page.locator('[data-tab="today"]').click();
+  await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 기본 성과 선택지');
+  await expect(page.locator('#reflectionBlockerOptions')).toContainText('수정한 기본 병목 선택지');
+  expect(await page.evaluate(() => localStorage.getItem('lifeos.reflectionOptions.project1.win.v1'))).not.toBeNull();
+});
+
+test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기록을 보존함', async ({ page }) => {
+  await page.locator('#openChecklistEditor').click();
+  const firstGroup = page.locator('#groupEditorList .project-edit-group').first();
+  await expect(firstGroup).toBeVisible();
+  const beforeName = (await firstGroup.locator('.project-edit-group-name strong').innerText()).trim();
+  page.once('dialog', dialog => dialog.dismiss());
+  await firstGroup.locator('[data-edit-area]').click();
+  await expect(firstGroup.locator('.project-edit-group-name strong')).toHaveText(beforeName);
+  await page.reload();
+  await page.locator('#openChecklistEditor').click();
+  await expect(page.locator('#groupEditorList .project-edit-group').first().locator('.project-edit-group-name strong')).toHaveText(beforeName);
+});
+
+
+test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 후에도 날짜별 기록을 보존함', async ({ page }) => {
+  const recordDate = '2026-02-03';
+  const recordKey = 'lifeos.records.v1.project1';
+
+  await page.locator('#openChecklistEditor').click();
+  const beforeGroups = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || 'null'));
+  await page.locator('#newGroupName').fill('테스트용 임시 영역');
+  await page.locator('#addGroup').click();
+  await expect(page.locator('#groupEditorList')).toContainText('테스트용 임시 영역');
+
+  // A draft-only change must not reach persistent storage until Save is clicked.
+  await expect.poll(() => page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || 'null');
+    return groups?.some(group => group.name === '테스트용 임시 영역') || false;
+  })).toBe(false);
+  await page.reload();
+  await page.locator('#openChecklistEditor').click();
+  await expect(page.locator('#groupEditorList')).not.toContainText('테스트용 임시 영역');
+
+  // Seed synthetic historical data after the editor is open; the editor save
+  // should not overwrite or delete this independent records key.
+  await page.evaluate(({ recordDate, recordKey }) => {
+    localStorage.setItem(recordKey, JSON.stringify({
+      [recordDate]: { tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } }
+    }));
+  }, { recordDate, recordKey });
+
+  await page.locator('#newGroupName').fill('테스트용 저장 영역');
+  await page.locator('#addGroup').click();
+  await page.locator('#saveChecklistEditor').click();
+  await expect(page.locator('#checkEditorStatus')).toContainText('저장 완료');
+  await expect.poll(() => page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    return groups.some(group => group.name === '테스트용 저장 영역');
+  })).toBe(true);
+
+  const preserved = await page.evaluate(({ recordDate, recordKey }) => {
+    const records = JSON.parse(localStorage.getItem(recordKey) || '{}');
+    return records[recordDate] || null;
+  }, { recordDate, recordKey });
+  expect(preserved).toEqual({ tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } });
+  expect(beforeGroups === null || Array.isArray(beforeGroups)).toBe(true);
 });
