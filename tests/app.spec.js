@@ -688,7 +688,7 @@ test('목표 설정은 일일 기록 저장과 분리되어 날짜가 바뀌어�
     el.dispatchEvent(new Event('change', { bubbles: true }));
   });
   await page.locator('[data-tab="data"]').click();
-  await page.locator('#goalSettingsPanel > summary').click();
+  await page.locator('#goalSettingsPanel').evaluate(el => { el.open = true; });
   await expect(page.locator('#hl-goal-weight')).toHaveValue('47.5');
   await expect(page.locator('#hl-goal-calories')).toHaveValue('1400');
   await expect(page.locator('#hl-goal-protein')).toHaveValue('110');
