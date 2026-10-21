@@ -874,22 +874,27 @@ test('성과 리포트는 연속 기록과 별개로 프로젝트 전체 완료 
 });
 
 
-test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변경하지 않음', async ({ page }) => {
+test('메인 통계는 데이터 관리에서 선택하고 메인 화면에 추세 그래프로 표시함', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
   const picker = page.locator('#homeStatsPicker');
   await expect(picker).toBeVisible();
   await expect(picker.locator('option:checked')).toHaveCount(3);
 
-  await picker.selectOption(['streak']);
+  await picker.selectOption(['streak', 'weight']);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.homeStats.v1') || '[]'))).toEqual(['streak', 'weight']);
+  await page.locator('[data-tab="today"]').click();
   await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
   await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
-  await expect(page.locator('[data-home-stat="monthRate"]')).toBeHidden();
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.homeStats.v1') || '[]'))).toEqual(['streak']);
+  await expect(page.locator('#homeTrendCharts .home-trend-card')).toHaveCount(2);
 
   await page.reload();
-  await expect(page.locator('#homeStatsPicker option:checked')).toHaveCount(1);
-  await expect.poll(() => page.locator('#homeStatsPicker').evaluate(el => Array.from(el.selectedOptions).map(option => option.value))).toEqual(['streak']);
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#homeStatsPicker option:checked')).toHaveCount(2);
+  await expect.poll(() => page.locator('#homeStatsPicker').evaluate(el => Array.from(el.selectedOptions).map(option => option.value))).toEqual(['streak', 'weight']);
+  await page.locator('[data-tab="today"]').click();
   await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
   await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
+  await expect(page.locator('#homeTrendCharts .home-trend-card')).toHaveCount(2);
 });
 
 test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 지원함', async ({ page }) => {
@@ -967,49 +972,37 @@ test('식단 입력란 비우기 기능은 표시하지 않음', async ({ page }
   await expect(page.locator('#clearHealthForm')).toHaveCount(0);
   await expect(page.locator('#exportHealthCsv')).toBeVisible();
 });
-test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저장하고 복원함', async ({ page }) => {
-  await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(0).check();
-  await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(1).check();
-  await page.locator('#reflectionBlockerOptions input[type="checkbox"]').nth(2).check();
-  await page.locator('#reflectionWinCustom').fill('고객 인터뷰 완료');
-  await page.locator('[data-add-reflection-option="win"]').click();
-  await expect(page.locator('#reflectionWinOptions')).toContainText('고객 인터뷰 완료');
-  await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
+test('오늘의 회고는 객관식 없이 질문별 답변을 저장하고 복원함', async ({ page }) => {
+  const win = page.locator('[data-reflection-answer="win"]');
+  const blocker = page.locator('[data-reflection-answer="blocker"]');
+  await expect(page.locator('#reflectionQuestionFields input[type="checkbox"]')).toHaveCount(0);
+  await win.fill('핵심 기능을 개선하고 테스트를 작성함');
+  await blocker.fill('테스트 데이터 준비에 시간이 걸림');
   await page.reload();
-  await expect(page.locator('#reflectionWinOptions')).toContainText('고객 인터뷰 완료');
-  await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
-  await expect(page.locator('#reflectionBlockerOptions input:checked')).toHaveCount(1);
+  await expect(page.locator('[data-reflection-answer="win"]')).toHaveValue('핵심 기능을 개선하고 테스트를 작성함');
+  await expect(page.locator('[data-reflection-answer="blocker"]')).toHaveValue('테스트 데이터 준비에 시간이 걸림');
 });
 
-
-test('프로젝트 편집에서 기본·사용자 정의 회고 선택지를 추가·수정·삭제하고 저장함', async ({ page }) => {
+test('프로젝트 편집에서 회고 질문을 수정·추가·삭제하고 저장함', async ({ page }) => {
   await page.locator('[data-tab="data"]').click();
   await page.locator('#projectList [data-edit-project]').first().click();
-  await expect(page.locator('#peReflectionWinOptions')).toBeVisible();
-  await page.locator('#peReflectionWinOptions input[data-pe-reflection-name="win"]').first().fill('수정한 기본 성과 선택지');
-  await page.locator('#peReflectionWinNew').fill('추가한 성과 선택지');
-  await page.locator('#peReflectionWinAdd').click();
-  await page.locator('#peReflectionWinNew').fill('삭제할 성과 선택지');
-  await page.locator('#peReflectionWinAdd').click();
-  await page.locator('#peReflectionWinOptions [data-pe-reflection-delete="win"]').last().click();
-  await expect(page.locator('#peReflectionWinOptions')).not.toContainText('삭제할 성과 선택지');
-  await page.locator('#peReflectionBlockerOptions input[data-pe-reflection-name="blocker"]').first().fill('수정한 기본 병목 선택지');
-  await page.locator('#peReflectionBlockerNew').fill('테스트 병목 선택지');
-  await page.locator('#peReflectionBlockerAdd').click();
+  await expect(page.locator('#peReflectionQuestions')).toBeVisible();
+  await page.locator('[data-pe-reflection-question="0"]').fill('오늘의 핵심 성과는?');
+  await page.locator('#peReflectionAdd').click();
+  await page.locator('[data-pe-reflection-question="3"]').fill('삭제할 질문');
+  await page.locator('[data-pe-reflection-delete="3"]').click();
+  await page.locator('#peReflectionAdd').click();
+  await page.locator('[data-pe-reflection-question="3"]').fill('오늘 새롭게 배운 것은?');
   await page.locator('#peSave').click();
   await expect(page.locator('#peStatus')).toContainText('저장 완료');
   await page.locator('[data-tab="today"]').click();
-  await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 기본 성과 선택지');
-  await expect(page.locator('#reflectionWinOptions')).toContainText('추가한 성과 선택지');
-  await expect(page.locator('#reflectionWinOptions')).not.toContainText('핵심 업무를 완료했어');
-  await expect(page.locator('#reflectionWinOptions')).not.toContainText('삭제할 성과 선택지');
-  await expect(page.locator('#reflectionBlockerOptions')).toContainText('수정한 기본 병목 선택지');
-  await expect(page.locator('#reflectionBlockerOptions')).toContainText('테스트 병목 선택지');
+  await expect(page.locator('#reflectionQuestionFields')).toContainText('오늘의 핵심 성과는?');
+  await expect(page.locator('#reflectionQuestionFields')).toContainText('오늘 새롭게 배운 것은?');
+  await expect(page.locator('#reflectionQuestionFields input[type="checkbox"]')).toHaveCount(0);
   await page.reload();
   await page.locator('[data-tab="today"]').click();
-  await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 기본 성과 선택지');
-  await expect(page.locator('#reflectionBlockerOptions')).toContainText('수정한 기본 병목 선택지');
-  expect(await page.evaluate(() => localStorage.getItem('lifeos.reflectionOptions.project1.win.v1'))).not.toBeNull();
+  await expect(page.locator('#reflectionQuestionFields')).toContainText('오늘의 핵심 성과는?');
+  expect(await page.evaluate(() => localStorage.getItem('lifeos.reflectionQuestions.project1.v1'))).not.toBeNull();
 });
 
 test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기록을 보존함', async ({ page }) => {
