@@ -949,8 +949,8 @@ test('달력 선택 설정은 프로젝트마다 독립적으로 저장됨', asy
 });
  
 test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유지됨', async ({ page }) => {
-  await page.locator('[data-tab="data"]').click();
-  await page.locator('details.gpt-disclosure summary').click();
+  await page.locator('[data-tab="today"]').click();
+  await page.locator('details.json-disclosure summary').click();
   const json = {date:'2026-10-21',meals:{breakfast:{food:'테스트 계란',kcal:100,carbs:2,protein:8,fat:5},lunch:{food:'테스트 닭가슴살',kcal:200,carbs:0,protein:40,fat:3},dinner:{food:'',kcal:0,carbs:0,protein:0,fat:0}}};
   await page.locator('#dietJsonPaste').fill(JSON.stringify(json));
   await page.locator('#applyDietJson').click();
@@ -958,13 +958,12 @@ test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유�
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1') || '{}'));
   expect(saved['2026-10-21'].meals.breakfast.food).toBe('테스트 계란');
   await page.reload();
-  await page.locator('[data-tab="data"]').click();
+  await page.locator('[data-tab="today"]').click();
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('테스트 계란');
 });
 
 test('식단 입력란 비우기는 화면만 비우고 저장된 기록을 삭제하지 않음', async ({ page }) => {
-  await page.locator('[data-tab="data"]').click();
-  await page.locator('details.gpt-disclosure summary').click();
+  await page.locator('[data-tab="today"]').click();
   await page.locator('#healthDate').fill('2026-10-20');
   await page.locator('#hl-breakfast-food').fill('테스트 보존 기록');
   await page.locator('#hl-breakfast-kcal').fill('120');
