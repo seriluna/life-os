@@ -831,3 +831,24 @@ test('건강 자동 저장 실패를 알리고 기존 건강 기록을 보존함
   expect(preserved.note).toBe('기존 합성 기록');
   expect(preserved.weight).toBe(50);
 });
+
+
+test('체크인 자동 저장 실패를 알리고 기존 루틴 기록을 보존함', async ({ page }) => {
+  const date = await page.locator('#recordDate').inputValue();
+  const key = await page.evaluate(() => Object.keys(localStorage).find(k => k.startsWith('lifeos.records.v1.')));
+  await page.evaluate(({ key, date }) => {
+    const existing = JSON.parse(localStorage.getItem(key) || '{}');
+    existing[date] = { ...(existing[date] || {}), reflection: { win: '기존 회고', blocker: '', tomorrow: '' }, metrics: { ...(existing[date]?.metrics || {}), weight: 51.2 } };
+    localStorage.setItem(key, JSON.stringify(existing));
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) throw new DOMException('Quota exceeded', 'QuotaExceededError');
+      return originalSetItem.call(this, name, value);
+    };
+  }, { key, date });
+  await page.locator('#reflectionWin').fill('저장 실패 새 회고');
+  await expect(page.locator('#toast')).toContainText('기록 자동 저장에 실패했어');
+  const preserved = await page.evaluate(({ key, date }) => JSON.parse(localStorage.getItem(key) || '{}')[date], { key, date });
+  expect(preserved.reflection.win).toBe('기존 회고');
+  expect(preserved.metrics.weight).toBe(51.2);
+});
