@@ -924,3 +924,17 @@ test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저�
   await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
   await expect(page.locator('#reflectionBlockerOptions input:checked')).toHaveCount(1);
 });
+
+
+test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기록을 보존함', async ({ page }) => {
+  await page.locator('#openChecklistEditor').click();
+  const firstGroup = page.locator('#groupEditorList .project-edit-group').first();
+  await expect(firstGroup).toBeVisible();
+  const beforeName = (await firstGroup.locator('.project-edit-group-name strong').innerText()).trim();
+  page.once('dialog', dialog => dialog.dismiss());
+  await firstGroup.locator('[data-edit-area]').click();
+  await expect(firstGroup.locator('.project-edit-group-name strong')).toHaveText(beforeName);
+  await page.reload();
+  await page.locator('#openChecklistEditor').click();
+  await expect(page.locator('#groupEditorList .project-edit-group').first().locator('.project-edit-group-name strong')).toHaveText(beforeName);
+});
