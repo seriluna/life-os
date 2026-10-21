@@ -384,3 +384,56 @@ test('식단·몸무게 통계에서 세 가지 보기 모드를 제공함', asy
   await page.locator('#healthStatsMode').selectOption('weight');
   await page.locator('#healthStatsMode').selectOption('both');
 });
+
+
+test('실행 항목 삭제는 범위를 선택하면 즉시 저장됨', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  const deleteButton = page.locator('#groupEditorList [data-delete-action]').first();
+  await expect(deleteButton).toBeVisible();
+  await deleteButton.click();
+
+  const dialog = page.locator('#taskScopeDialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('선택한 날짜만')).toBeVisible();
+  await expect(dialog.getByText('직접 지정한 기간만')).toBeVisible();
+  await expect(dialog.getByText('프로젝트 전체 기간')).toBeVisible();
+  await dialog.locator('[name="scopeMode"][value="date"]').check();
+  await dialog.locator('button[type="submit"]').click();
+
+  const scopeData = await page.evaluate(() => {
+    const raw = localStorage.getItem('lifeos.checklist.taskScopes.v1.project1');
+    return raw ? JSON.parse(raw) : null;
+  });
+  expect(scopeData).not.toBeNull();
+  expect(Object.keys(scopeData).length).toBeGreaterThan(0);
+  const ranges = Object.values(scopeData)[0];
+  expect(ranges).toHaveLength(1);
+  expect(ranges[0].startDate).toBe(ranges[0].endDate);
+  await page.reload();
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#groupEditorList [data-delete-action]')).toHaveCount(23);
+});
+
+test('실행 항목 이름 수정은 지정한 기간에만 적용하고 즉시 저장됨', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  const editButton = page.locator('#groupEditorList [data-edit-action]').first();
+  await expect(editButton).toBeVisible();
+  page.once('dialog', dialog => dialog.accept('기간 한정 수정 항목'));
+  await editButton.click();
+
+  const dialog = page.locator('#taskScopeDialog');
+  await expect(dialog).toBeVisible();
+  await dialog.locator('[name="scopeMode"][value="range"]').check();
+  await dialog.locator('#taskScopeStart').fill('2026-10-01');
+  await dialog.locator('#taskScopeEnd').fill('2026-10-10');
+  await dialog.locator('button[type="submit"]').click();
+
+  const saved = await page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    const history = JSON.parse(localStorage.getItem('lifeos.checklist.labelHistory.v1.project1') || '{}');
+    const taskId = groups[0].tasks[0][0];
+    return { task: groups[0].tasks.find(t => t[0] === taskId), history: history[taskId] };
+  });
+  expect(saved.task[1]).toBe('기간 한정 수정 항목');
+  expect(saved.history.changes.some(c => c.date === '2026-10-01' && c.endDate === '2026-10-10' && c.label === '기간 한정 수정 항목')).toBe(true);
+});
