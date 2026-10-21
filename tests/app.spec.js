@@ -505,6 +505,7 @@ test('실행 항목 추가도 선택한 날짜 범위에만 표시되고 저장�
   expect(saved.task).toBeTruthy();
   expect(saved.scope).toEqual([{ startDate: '2026-10-01', endDate: '2026-10-10' }]);
 
+  await page.locator('[data-tab="today"]').click();
   await page.locator('#recordDate').fill('2026-10-15');
   await page.locator('#recordDate').dispatchEvent('change');
   await expect(page.locator('[data-task="' + saved.task[0] + '"]')).toHaveCount(0);
