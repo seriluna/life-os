@@ -948,6 +948,9 @@ test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 
       [recordDate]: { tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } }
     }));
   }, { recordDate, recordKey });
+  // Reload so the app's in-memory record snapshot includes the synthetic record
+  // before editor navigation can trigger any quiet save.
+  await page.reload();
 
   await page.locator('#openChecklistEditor').click();
   const beforeGroups = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || 'null'));
