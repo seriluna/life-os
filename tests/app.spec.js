@@ -310,6 +310,10 @@ test('JSON 복원 후 건강 기록이 화면과 목표 입력란에 표시됨',
 
 
 test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 건강 기록을 즉시 표시함', async ({ page }) => {
+  const today = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const backup = {
     app: 'LIFE OS', version: 3,
     records: {},
@@ -359,9 +363,9 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
     active: localStorage.getItem('lifeos.activeProject.v1')
   }));
   expect(projectRecords.active).toBe('project2');
-  expect(projectRecords.project2['2026-10-20'].tasks.contact).toBe(true);
+  expect(projectRecords.project2[today].tasks.contact).toBe(true);
   // The app may initialize an empty record for today in the default project; it must not mark this task there.
-  expect(projectRecords.project1['2026-10-20']?.tasks?.contact).not.toBe(true);
+  expect(projectRecords.project1[today]?.tasks?.contact).not.toBe(true);
 });
 
 
