@@ -884,6 +884,9 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
     '2026-10-20': { tasks: { contact: true }, metrics: { weight: 50.2 }, reflection: { win: '합성 기록 유지 확인' } }
   };
   await page.evaluate(({ key, value }) => localStorage.setItem(key, JSON.stringify(value)), { key: recordKey, value: syntheticRecords });
+  // Reload so the app's in-memory record cache starts from the seeded localStorage value.
+  await page.reload();
+  await expect(page.locator('#homeStatsPicker')).toBeVisible();
 
   await picker.selectOption(['streak']);
   await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
