@@ -943,14 +943,6 @@ test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기�
 test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 후에도 날짜별 기록을 보존함', async ({ page }) => {
   const recordDate = '2026-02-03';
   const recordKey = 'lifeos.records.v1.project1';
-  await page.evaluate(({ recordDate, recordKey }) => {
-    localStorage.setItem(recordKey, JSON.stringify({
-      [recordDate]: { tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } }
-    }));
-  }, { recordDate, recordKey });
-  // Reload so the app's in-memory record snapshot includes the synthetic record
-  // before editor navigation can trigger any quiet save.
-  await page.reload();
 
   await page.locator('#openChecklistEditor').click();
   const beforeGroups = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || 'null'));
@@ -966,6 +958,14 @@ test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 
   await page.reload();
   await page.locator('#openChecklistEditor').click();
   await expect(page.locator('#groupEditorList')).not.toContainText('테스트용 임시 영역');
+
+  // Seed synthetic historical data after the editor is open; the editor save
+  // should not overwrite or delete this independent records key.
+  await page.evaluate(({ recordDate, recordKey }) => {
+    localStorage.setItem(recordKey, JSON.stringify({
+      [recordDate]: { tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } }
+    }));
+  }, { recordDate, recordKey });
 
   await page.locator('#newGroupName').fill('테스트용 저장 영역');
   await page.locator('#addGroup').click();
