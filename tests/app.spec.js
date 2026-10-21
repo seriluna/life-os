@@ -442,3 +442,73 @@ test('실행 항목 이름 수정은 지정한 기간에만 적용하고 즉시 
   expect(saved.task[1]).toBe('기간 한정 수정 항목');
   expect(saved.history.changes.some(c => c.date === '2026-10-01' && c.endDate === '2026-10-10' && c.label === '기간 한정 수정 항목')).toBe(true);
 });
+
+
+test('JSON 백업에 기간별 실행 항목 수정·삭제 설정이 포함됨', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.checklist.labelHistory.v1.project1', JSON.stringify({
+      contact: { baseLabel: '잠재 고객 접촉 1회', changes: [{ date: '2026-10-01', endDate: '2026-10-10', label: '기간 한정 연락' }] }
+    }));
+    localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify({
+      marketing: [{ startDate: '2026-10-05', endDate: '2026-10-07' }]
+    }));
+  });
+  await page.locator('[data-tab="data"]').click();
+  await page.evaluate(() => {
+    window.__exportBlobText = null;
+    const originalCreateObjectURL = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = blob => {
+      window.__exportBlobText = blob.text();
+      return originalCreateObjectURL(blob);
+    };
+  });
+  await page.locator('#exportJson').click();
+  const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
+  expect(backup.projectData.project1.labelHistory.contact.changes[0].label).toBe('기간 한정 연락');
+  expect(backup.projectData.project1.taskScopes.marketing[0].startDate).toBe('2026-10-05');
+});
+
+test('JSON 복원은 기간별 실행 항목 수정·삭제 설정도 보존함', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3, records: {},
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: {
+      project1: {
+        records: {},
+        labelHistory: { contact: { baseLabel: '기존 이름', changes: [{ date: '2026-10-01', endDate: '2026-10-10', label: '복원 이름' }] } },
+        taskScopes: { marketing: [{ startDate: '2026-10-05', endDate: '2026-10-07' }] }
+      }
+    }
+  };
+  await page.locator('#importFile').setInputFiles({
+    name: 'scoped-checklist-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+  const result = await page.evaluate(() => ({
+    history: JSON.parse(localStorage.getItem('lifeos.checklist.labelHistory.v1.project1') || '{}'),
+    scopes: JSON.parse(localStorage.getItem('lifeos.checklist.taskScopes.v1.project1') || '{}')
+  }));
+  expect(result.history.contact.changes[0].label).toBe('복원 이름');
+  expect(result.scopes.marketing[0].endDate).toBe('2026-10-07');
+});
+
+test('누적 리포트 실행률은 기간별 제외 설정을 반영함', async ({ page }) => {
+  const today = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  await page.evaluate((today) => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    const scopes = {};
+    groups.forEach(group => group.tasks.forEach(([id]) => {
+      if (id !== 'contact') scopes[id] = [{ startDate: today, endDate: today }];
+    }));
+    localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify(scopes));
+    localStorage.setItem('lifeos.records.v1.project1', JSON.stringify({
+      [today]: { tasks: { contact: true }, metrics: {}, reflection: { win: '', blocker: '', tomorrow: '' } }
+    }));
+  }, today);
+  await page.reload();
+  await expect(page.locator('#dailyReportContent')).toContainText('100%');
+  await expect(page.locator('#dailyReportContent')).toContainText('1회');
+});
