@@ -897,5 +897,6 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
   await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
   await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
   const savedRecords = await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '{}'), recordKey);
-  expect(savedRecords).toEqual(syntheticRecords);
+  // App initialization may create today's blank record; the seeded historical record must remain unchanged.
+  expect(savedRecords['2026-10-20']).toEqual(syntheticRecords['2026-10-20']);
 });
