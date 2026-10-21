@@ -983,23 +983,29 @@ test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저�
 
 
 test('프로젝트 편집에서 오늘의 회고 선택지를 추가·수정·삭제하고 저장함', async ({ page }) => {
-  await page.locator('[data-tab="projects"]').click();
+  await page.locator('[data-tab="data"]').click();
   await page.locator('#projectList [data-edit-project]').first().click();
   await expect(page.locator('#peReflectionWinOptions')).toBeVisible();
   await page.locator('#peReflectionWinNew').fill('테스트 성과 선택지');
   await page.locator('#peReflectionWinAdd').click();
   await page.locator('#peReflectionWinOptions input[data-pe-reflection-name="win"]').last().fill('수정한 성과 선택지');
+  await page.locator('#peReflectionWinNew').fill('삭제할 성과 선택지');
+  await page.locator('#peReflectionWinAdd').click();
+  await page.locator('#peReflectionWinOptions [data-pe-reflection-delete="win"]').last().click();
+  await expect(page.locator('#peReflectionWinOptions')).not.toContainText('삭제할 성과 선택지');
   await page.locator('#peReflectionBlockerNew').fill('테스트 병목 선택지');
   await page.locator('#peReflectionBlockerAdd').click();
   await page.locator('#peSave').click();
   await expect(page.locator('#peStatus')).toContainText('저장 완료');
   await page.locator('[data-tab="today"]').click();
   await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 성과 선택지');
+  await expect(page.locator('#reflectionWinOptions')).not.toContainText('삭제할 성과 선택지');
   await expect(page.locator('#reflectionBlockerOptions')).toContainText('테스트 병목 선택지');
   await page.reload();
   await page.locator('[data-tab="today"]').click();
   await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 성과 선택지');
   await expect(page.locator('#reflectionBlockerOptions')).toContainText('테스트 병목 선택지');
+  await expect(page.evaluate(() => localStorage.getItem('lifeos.reflectionOptions.project1.win.v1'))).not.toBeNull();
 });
 
 test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기록을 보존함', async ({ page }) => {
