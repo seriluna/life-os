@@ -964,14 +964,14 @@ test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유�
 
 test('식단 입력란 비우기는 화면만 비우고 저장된 기록을 삭제하지 않음', async ({ page }) => {
   await page.locator('[data-tab="today"]').click();
-  // The date input is intentionally hidden; seed a synthetic saved record directly.
+  await page.locator('#hl-breakfast-food').fill('화면에서 지울 임시 입력');
+  // Seed after the input's autosave so the in-memory log snapshot cannot overwrite this synthetic record.
   await page.evaluate(() => {
     const key='lifeos.health.logs.v1.project1';
     const data=JSON.parse(localStorage.getItem(key)||'{}');
     data['2026-10-20']={...(data['2026-10-20']||{}),date:'2026-10-20',weight:'',note:'',meals:{breakfast:{food:'테스트 보존 기록',kcal:120,carbs:0,protein:0,fat:0},lunch:{},dinner:{}}};
     localStorage.setItem(key,JSON.stringify(data));
   });
-  await page.locator('#hl-breakfast-food').fill('화면에서 지울 임시 입력');
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#clearHealthForm').click();
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('');
