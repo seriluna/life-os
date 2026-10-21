@@ -893,6 +893,8 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
 });
 
 test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 지원함', async ({ page }) => {
+  await page.locator('[data-tab="insights"]').click();
+  await expect(page.locator('[data-tab="insights"]')).toHaveClass(/active/);
   const options = page.locator('#calendarTaskPicker input[data-calendar-task]');
   await expect(options.first()).toBeVisible();
   const count = await options.count();
