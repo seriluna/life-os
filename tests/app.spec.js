@@ -498,11 +498,11 @@ test('누적 리포트 실행률은 기간별 제외 설정을 반영함', async
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
   await page.evaluate((today) => {
-    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    const taskIds = [...document.querySelectorAll('[data-task]')].map(el => el.dataset.task);
     const scopes = {};
-    groups.forEach(group => group.tasks.forEach(([id]) => {
+    taskIds.forEach(id => {
       if (id !== 'contact') scopes[id] = [{ startDate: today, endDate: today }];
-    }));
+    });
     localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify(scopes));
     localStorage.setItem('lifeos.records.v1.project1', JSON.stringify({
       [today]: { tasks: { contact: true }, metrics: {}, reflection: { win: '', blocker: '', tomorrow: '' } }
