@@ -966,7 +966,6 @@ test('식단 입력란 비우기는 화면만 비우고 저장된 기록을 삭�
   await page.locator('#healthDate').fill('2026-10-20');
   await page.locator('#hl-breakfast-food').fill('테스트 보존 기록');
   await page.locator('#hl-breakfast-kcal').fill('120');
-  await page.locator('#saveHealthLog').click().catch(() => {});
   await page.evaluate(() => {
     const key='lifeos.health.logs.v1.project1';
     const data=JSON.parse(localStorage.getItem(key)||'{}');
