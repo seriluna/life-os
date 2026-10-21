@@ -887,6 +887,8 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
   // Reload so the app's in-memory record cache starts from the seeded localStorage value.
   await page.reload();
   await expect(page.locator('#homeStatsPicker')).toBeVisible();
+  // Confirm the app loaded the seeded history before testing the preference interaction.
+  await expect.poll(() => page.evaluate(key => JSON.parse(localStorage.getItem(key) || '{}')['2026-10-20'], recordKey)).toEqual(syntheticRecords['2026-10-20']);
 
   await picker.selectOption(['streak']);
   await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
