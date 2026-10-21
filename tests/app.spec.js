@@ -938,3 +938,45 @@ test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기�
   await page.locator('#openChecklistEditor').click();
   await expect(page.locator('#groupEditorList .project-edit-group').first().locator('.project-edit-group-name strong')).toHaveText(beforeName);
 });
+
+
+test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 후에도 날짜별 기록을 보존함', async ({ page }) => {
+  const recordDate = '2026-02-03';
+  const recordKey = 'lifeos.records.v1.project1';
+  await page.evaluate(({ recordDate, recordKey }) => {
+    localStorage.setItem(recordKey, JSON.stringify({
+      [recordDate]: { tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } }
+    }));
+  }, { recordDate, recordKey });
+
+  await page.locator('#openChecklistEditor').click();
+  const beforeGroups = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || 'null'));
+  await page.locator('#newGroupName').fill('테스트용 임시 영역');
+  await page.locator('#addGroup').click();
+  await expect(page.locator('#groupEditorList')).toContainText('테스트용 임시 영역');
+
+  // A draft-only change must not reach persistent storage until Save is clicked.
+  await expect.poll(() => page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || 'null');
+    return groups?.some(group => group.name === '테스트용 임시 영역') || false;
+  })).toBe(false);
+  await page.reload();
+  await page.locator('#openChecklistEditor').click();
+  await expect(page.locator('#groupEditorList')).not.toContainText('테스트용 임시 영역');
+
+  await page.locator('#newGroupName').fill('테스트용 저장 영역');
+  await page.locator('#addGroup').click();
+  await page.locator('#saveChecklistEditor').click();
+  await expect(page.locator('#checkEditorStatus')).toContainText('저장 완료');
+  await expect.poll(() => page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    return groups.some(group => group.name === '테스트용 저장 영역');
+  })).toBe(true);
+
+  const preserved = await page.evaluate(({ recordDate, recordKey }) => {
+    const records = JSON.parse(localStorage.getItem(recordKey) || '{}');
+    return records[recordDate] || null;
+  }, { recordDate, recordKey });
+  expect(preserved).toEqual({ tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } });
+  expect(beforeGroups === null || Array.isArray(beforeGroups)).toBe(true);
+});
