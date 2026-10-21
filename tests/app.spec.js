@@ -107,6 +107,17 @@ test('화면을 다시 그려도 건강 기록 카드가 식단 영역에 유지
   await expect(page.locator('#categories [data-checklist-group="diet"] #healthLogCard')).toHaveCount(1);
 });
 
+test('날짜를 바꿔도 건강 기록 카드가 식단 영역에 유지됨', async ({ page }) => {
+  const healthCard = page.locator('#healthLogCard');
+  await expect(healthCard).toBeVisible();
+
+  await page.locator('#recordDate').fill('2026-10-15');
+  await page.locator('#recordDate').dispatchEvent('change');
+
+  await expect(healthCard).toBeVisible();
+  await expect(page.locator('#categories [data-checklist-group="diet"] #healthLogCard')).toHaveCount(1);
+});
+
 test('건강 기록과 루틴 기록의 저장 키 규칙이 분리되어 있음', async ({ page }) => {
   const [healthScript, appScript] = await Promise.all([
     page.request.get('/health-log.js').then(r => r.text()),
@@ -441,4 +452,101 @@ test('실행 항목 이름 수정은 지정한 기간에만 적용하고 즉시 
   });
   expect(saved.task[1]).toBe('기간 한정 수정 항목');
   expect(saved.history.changes.some(c => c.date === '2026-10-01' && c.endDate === '2026-10-10' && c.label === '기간 한정 수정 항목')).toBe(true);
+});
+
+
+test('JSON 백업에 기간별 실행 항목 수정·삭제 설정이 포함됨', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.checklist.labelHistory.v1.project1', JSON.stringify({
+      contact: { baseLabel: '잠재 고객 접촉 1회', changes: [{ date: '2026-10-01', endDate: '2026-10-10', label: '기간 한정 연락' }] }
+    }));
+    localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify({
+      marketing: [{ startDate: '2026-10-05', endDate: '2026-10-07' }]
+    }));
+  });
+  await page.locator('[data-tab="data"]').click();
+  await page.evaluate(() => {
+    window.__exportBlobText = null;
+    const originalCreateObjectURL = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = blob => {
+      window.__exportBlobText = blob.text();
+      return originalCreateObjectURL(blob);
+    };
+  });
+  await page.locator('#exportJson').click();
+  const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
+  expect(backup.projectData.project1.labelHistory.contact.changes[0].label).toBe('기간 한정 연락');
+  expect(backup.projectData.project1.taskScopes.marketing[0].startDate).toBe('2026-10-05');
+});
+
+test('같은 프로젝트에 JSON 복원하면 체크리스트 화면도 즉시 갱신됨', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3, records: {},
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: {
+      project1: {
+        records: {},
+        groups: [{ id: 'restored', name: '복원된 영역', icon: '📌', desc: '복원 테스트', tasks: [['restoredTask', '복원된 실행 항목']] }]
+      }
+    }
+  };
+
+  await page.locator('#importFile').setInputFiles({
+    name: 'restore-checklist.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+
+  await expect(page.locator('[data-checklist-group="restored"]')).toContainText('복원된 영역');
+  await expect(page.locator('[data-task="restoredTask"]')).toBeVisible();
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#groupEditorList')).toContainText('복원된 실행 항목');
+});
+
+test('JSON 복원은 기간별 실행 항목 수정·삭제 설정도 보존함', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3, records: {},
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: {
+      project1: {
+        records: {},
+        labelHistory: { contact: { baseLabel: '기존 이름', changes: [{ date: '2026-10-01', endDate: '2026-10-10', label: '복원 이름' }] } },
+        taskScopes: { marketing: [{ startDate: '2026-10-05', endDate: '2026-10-07' }] }
+      }
+    }
+  };
+  await page.locator('#importFile').setInputFiles({
+    name: 'scoped-checklist-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+  const result = await page.evaluate(() => ({
+    history: JSON.parse(localStorage.getItem('lifeos.checklist.labelHistory.v1.project1') || '{}'),
+    scopes: JSON.parse(localStorage.getItem('lifeos.checklist.taskScopes.v1.project1') || '{}')
+  }));
+  expect(result.history.contact.changes[0].label).toBe('복원 이름');
+  expect(result.scopes.marketing[0].endDate).toBe('2026-10-07');
+});
+
+test('누적 리포트 실행률은 기간별 제외 설정을 반영함', async ({ page }) => {
+  const today = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  await page.evaluate((today) => {
+    const storedGroups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    const taskIds = [...new Set([
+      ...storedGroups.flatMap(group => (group.tasks || []).map(task => task[0])),
+      ...[...document.querySelectorAll('[data-task]')].map(el => el.dataset.task)
+    ])];
+    const scopes = { marketing: [{ startDate: today, endDate: today }] };
+    const tasks = Object.fromEntries(taskIds.map(id => [id, id !== 'marketing']));
+    localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify(scopes));
+    const nextRecords = { ...records, [today]: { tasks, metrics: {}, reflection: { win: '', blocker: '', tomorrow: '' } } };
+    localStorage.setItem('lifeos.records.v1.project1', JSON.stringify(nextRecords));
+    records = nextRecords;
+    renderDailyReport();
+  }, today);
+  await expect(page.locator('#dailyReportContent')).toContainText('100%');
+  const reportText = await page.locator('#dailyReportContent').innerText();
+  expect(reportText).toMatch(/완료한 행동\s*\d+회/);
+  expect(reportText).not.toContain('완료한 행동\n0회');
 });
