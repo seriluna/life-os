@@ -506,11 +506,11 @@ test('누적 리포트 실행률은 기간별 제외 설정을 반영함', async
     const scopes = { marketing: [{ startDate: today, endDate: today }] };
     const tasks = Object.fromEntries(taskIds.map(id => [id, id !== 'marketing']));
     localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify(scopes));
-    localStorage.setItem('lifeos.records.v1.project1', JSON.stringify({
-      [today]: { tasks, metrics: {}, reflection: { win: '', blocker: '', tomorrow: '' } }
-    }));
+    const nextRecords = { ...records, [today]: { tasks, metrics: {}, reflection: { win: '', blocker: '', tomorrow: '' } } };
+    localStorage.setItem('lifeos.records.v1.project1', JSON.stringify(nextRecords));
+    records = nextRecords;
+    renderDailyReport();
   }, today);
-  await page.reload();
   await expect(page.locator('#dailyReportContent')).toContainText('100%');
   const reportText = await page.locator('#dailyReportContent').innerText();
   expect(reportText).toMatch(/완료한 행동\s*\d+회/);
