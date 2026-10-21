@@ -907,6 +907,8 @@ test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 �
   await expect(page.locator('#multiTaskCalendar table')).toBeVisible();
   await page.locator('#calendarSelectAll').click();
   await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(count);
+  const savedSelection = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'));
+  expect(savedSelection).toHaveLength(count);
   await page.reload();
   await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(count);
 });
