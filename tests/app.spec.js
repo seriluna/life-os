@@ -969,14 +969,16 @@ test('식단 입력란 비우기는 화면만 비우고 저장된 기록을 삭�
   await page.evaluate(() => {
     const key='lifeos.health.logs.v1.project1';
     const data=JSON.parse(localStorage.getItem(key)||'{}');
-    data['2026-10-20']={...(data['2026-10-20']||{}),date:'2026-10-20',weight:'',note:'',meals:{breakfast:{food:'테스트 보존 기록',kcal:120,carbs:0,protein:0,fat:0},lunch:{},dinner:{}}};
+    const date=new Date().toISOString().slice(0,10);
+    data[date]={...(data[date]||{}),date,weight:'',note:'',meals:{breakfast:{food:'테스트 보존 기록',kcal:120,carbs:0,protein:0,fat:0},lunch:{},dinner:{}}};
     localStorage.setItem(key,JSON.stringify(data));
   });
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#clearHealthForm').click();
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('');
   const preserved = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1') || '{}'));
-  expect(preserved['2026-10-20'].meals.breakfast.food).toBe('테스트 보존 기록');
+  const today=new Date().toISOString().slice(0,10);
+  expect(preserved[today].meals.breakfast.food).toBe('테스트 보존 기록');
 });
 
 test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저장하고 복원함', async ({ page }) => {
