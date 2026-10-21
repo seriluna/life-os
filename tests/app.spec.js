@@ -812,3 +812,22 @@ test('서비스워커가 HTML에서 참조하는 현재 스크립트 버전을 �
   expect(serviceWorker).toContain('"./app.js?v=58"');
   expect(serviceWorker).toContain('"./health-log.js?v=28"');
 });
+
+
+test('건강 자동 저장 실패를 알리고 기존 건강 기록을 보존함', async ({ page }) => {
+  const date = await page.locator('#healthDate').inputValue();
+  const key = 'lifeos.health.logs.v1.project1';
+  await page.evaluate(({ key, date }) => {
+    localStorage.setItem(key, JSON.stringify({ [date]: { date, weight: 50, note: '기존 합성 기록', meals: {} } }));
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (name, value) {
+      if (name === key) throw new DOMException('Quota exceeded', 'QuotaExceededError');
+      return originalSetItem.call(this, name, value);
+    };
+  }, { key, date });
+  await page.locator('#hl-breakfast-food').fill('저장 실패 합성 테스트');
+  await expect(page.locator('#toast')).toContainText('자동 저장에 실패했어');
+  const preserved = await page.evaluate(({ key, date }) => JSON.parse(localStorage.getItem(key) || '{}')[date], { key, date });
+  expect(preserved.note).toBe('기존 합성 기록');
+  expect(preserved.weight).toBe(50);
+});
