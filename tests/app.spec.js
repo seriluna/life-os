@@ -962,33 +962,10 @@ test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유�
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('테스트 계란');
 });
 
-test('식단 입력란 비우기는 화면만 비우고 저장된 기록을 삭제하지 않음', async ({ page }) => {
+test('식단 입력란 비우기 기능은 표시하지 않음', async ({ page }) => {
   await page.locator('[data-tab="today"]').click();
-  // Save a historical record through the app so in-memory and persisted states agree.
-  await page.locator('#healthDate').evaluate((el, value) => {
-    el.value = value;
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  }, '2026-10-20');
-  await page.locator('#hl-breakfast-food').fill('테스트 보존 기록');
-  await page.locator('#hl-breakfast-kcal').fill('120');
-  await page.evaluate(() => window.lifeosSaveHealthLog(true));
-  await expect.poll(async () => page.evaluate(() => {
-    const data = JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1') || '{}');
-    return data['2026-10-20']?.meals?.breakfast?.food || '';
-  })).toBe('테스트 보존 기록');
-
-  // Switch to today's form and clear only the visible inputs.
-  await page.locator('#healthDate').evaluate((el) => {
-    const d = new Date();
-    el.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-  });
-  await page.locator('#hl-breakfast-food').fill('화면에서 지울 임시 입력');
-  page.once('dialog', dialog => dialog.accept());
-  await page.locator('#clearHealthForm').click();
-  await expect(page.locator('#hl-breakfast-food')).toHaveValue('');
-  const preserved = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1') || '{}'));
-  expect(preserved['2026-10-20'].meals.breakfast.food).toBe('테스트 보존 기록');
+  await expect(page.locator('#clearHealthForm')).toHaveCount(0);
+  await expect(page.locator('#exportHealthCsv')).toBeVisible();
 });
 test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저장하고 복원함', async ({ page }) => {
   await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(0).check();
