@@ -579,6 +579,7 @@ test('같은 프로젝트에 JSON 복원하면 체크리스트 화면도 즉시 
     name: 'restore-checklist.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
   });
 
+  await page.locator('[data-tab="today"]').click();
   await expect(page.locator('[data-checklist-group="restored"]')).toContainText('복원된 영역');
   await expect(page.locator('[data-task="restoredTask"]')).toBeVisible();
   await page.locator('[data-tab="data"]').click();
@@ -656,6 +657,7 @@ test('프로젝트 대시보드는 연도별 프로젝트 기간과 상태를 �
 });
 
 test('백업 복원은 파일 형식 확인 후 명시적으로 복원할 때만 적용됨', async ({ page }) => {
+  await openDataManagement(page);
   const backup = {
     app: 'LIFE OS', version: 3,
     records: { '2026-10-20': { tasks: {}, metrics: { weight: 49 } } },
@@ -711,6 +713,7 @@ test('프로젝트 대시보드는 기간 시각화와 연도별 필터를 제�
     localStorage.setItem('lifeos.activeProject.v1', 'project1');
   });
   await page.reload();
+  await openDataManagement(page);
 
   await expect(page.locator('#projectDashboard')).toBeVisible();
   await expect(page.locator('#projectList')).toContainText('2025-26 프로젝트');
