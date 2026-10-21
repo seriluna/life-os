@@ -772,3 +772,27 @@ test('전체 백업 파일은 먼저 미리보기하고 취소할 수 있음', a
   await expect(page.locator('#restoreJson')).toBeDisabled();
   await expect(page.locator('#backupFilePreview')).toContainText('아직 파일을 선택하지 않았어');
 });
+
+ 
+test('체크인 입력과 식단 입력은 자동 저장되고 공복 몸무게 입력은 하나만 제공함', async ({ page }) => {
+  await expect(page.locator('#m_weight')).toHaveCount(1);
+  await expect(page.locator('#hl-weight')).toHaveCount(0);
+  await page.locator('#reflectionWin').fill('자동 저장 회고 테스트');
+  await page.locator('#m_weight').fill('52.1');
+  await page.locator('#hl-breakfast-food').fill('자동 저장 식단 테스트');
+  await expect.poll(async () => page.evaluate(() => {
+    const recordKey = Object.keys(localStorage).find(k => k.startsWith('lifeos.records.v1.'));
+    const healthKey = Object.keys(localStorage).find(k => k.startsWith('lifeos.health.logs.v1.'));
+    const date = document.querySelector('#recordDate').value;
+    const record = recordKey ? JSON.parse(localStorage.getItem(recordKey) || '{}')[date] : null;
+    const health = healthKey ? JSON.parse(localStorage.getItem(healthKey) || '{}')[date] : null;
+    return { reflection: record?.reflection?.win || '', weight: record?.metrics?.weight, healthWeight: health?.weight, food: health?.meals?.breakfast?.food || '' };
+  })).toEqual({ reflection: '자동 저장 회고 테스트', weight: 52.1, healthWeight: 52.1, food: '자동 저장 식단 테스트' });
+});
+
+test('메인 화면과 성과 분석에서 요청된 누적 지표를 표시하지 않음', async ({ page }) => {
+  await expect(page.locator('#paidCustomers')).toHaveCount(0);
+  await expect(page.locator('#iRevenue')).toHaveCount(0);
+  await expect(page.getByText('유료 고객 누적', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('사업 결제액 누적', { exact: true })).toHaveCount(0);
+});
