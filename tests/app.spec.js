@@ -671,7 +671,7 @@ test('백업 복원은 파일 형식 확인 후 명시적으로 복원할 때만
 
 test('목표 설정은 일일 기록 저장과 분리되어 날짜가 바뀌어도 유지됨', async ({ page }) => {
   await page.locator('[data-tab="data"]').click();
-  await page.locator('#goalSettingsPanel > summary').click();
+  await page.locator('#goalSettingsPanel').evaluate(el => { el.open = true; });
   await page.locator('#hl-goal-weight').fill('47.5');
   await page.locator('#hl-goal-calories').fill('1400');
   await page.locator('#hl-goal-protein').fill('110');
