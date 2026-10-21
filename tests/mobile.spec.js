@@ -75,3 +75,12 @@ test('모바일 인사이트 화면에서 건강 통계 모드를 바꿀 수 있
   await page.locator('#healthStatsMode').selectOption('both');
   await expectNoHorizontalOverflow(page);
 });
+
+test('모바일 체크리스트 편집실에서 프로젝트와 항목 조작이 화면 밖으로 밀리지 않음', async ({ page }) => {
+  await page.locator('#openChecklistEditor').click();
+  await expect(page.locator('#dataView')).toBeVisible();
+  await expect(page.locator('#checklistEditorCard')).toBeVisible();
+  await expect(page.locator('#checkProjectPicker')).toBeVisible();
+  await expect(page.locator('#groupEditorList .project-edit-group').first()).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});
