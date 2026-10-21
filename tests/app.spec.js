@@ -6,6 +6,21 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
+async function restoreBackup(page, file, { expectError = false, expectNavigation = false } = {}) {
+  await page.locator('#importFile').setInputFiles(file);
+  await expect(page.locator('#backupFilePreview')).toContainText('전체 백업 형식 확인 완료');
+  const dialogTypes = [];
+  const handler = async dialog => { dialogTypes.push(dialog.type()); await dialog.accept(); };
+  page.on('dialog', handler);
+  const navigation = expectNavigation ? page.waitForNavigation() : null;
+  await page.locator('#restoreJson').click();
+  if (navigation) await navigation;
+  if (expectError) await expect(page.locator('#backupRestoreStatus')).toContainText('백업 복원 실패');
+  else if (!expectNavigation) await expect(page.locator('#restoreJson')).toBeDisabled();
+  page.off('dialog', handler);
+  return dialogTypes;
+}
+
 test('앱 초기화와 핵심 화면 표시', async ({ page }) => {
   await expect(page.locator('#todayView')).toBeVisible();
   await expect(page.locator('#saveBtn')).toBeVisible();
@@ -186,7 +201,7 @@ test('JSON 복원은 기존 건강 기록·목표를 보존하며 백업 내용�
       }
     }
   };
-  await page.locator('#importFile').setInputFiles({
+  await restoreBackup(page, {
     name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
   });
 
@@ -211,10 +226,11 @@ test('잘못된 JSON 복원은 기존 건강 데이터와 목표를 변경하지
       targetWeightKg: 46
     }));
   });
-  page.once('dialog', dialog => dialog.accept());
   await page.locator('#importFile').setInputFiles({
     name: 'invalid-backup.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"WRONG","records":{}}')
   });
+  await expect(page.locator('#restoreJson')).toBeDisabled();
+  await expect(page.locator('#backupRestoreStatus')).toContainText('복원할 수 없는 파일');
   const result = await page.evaluate(() => ({
     logs: JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1')),
     goals: JSON.parse(localStorage.getItem('lifeos.health.goals.v1.project1'))
@@ -262,10 +278,11 @@ test('저장 용량 초과 시 JSON 복원은 기존 데이터를 롤백해 보�
       return originalSetItem.call(this, key, value);
     };
   });
-  page.once('dialog', dialog => dialog.accept());
-  await page.locator('#importFile').setInputFiles({
+  const dialogTypes = await restoreBackup(page, {
     name: 'quota-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
-  });
+  }, { expectError: true });
+  expect(dialogTypes).toContain('confirm');
+  expect(dialogTypes).toContain('alert');
 
   const result = await page.evaluate(() => ({
     healthLogs: JSON.parse(localStorage.getItem('lifeos.health.logs.v1.project1')),
@@ -301,7 +318,7 @@ test('JSON 복원 후 건강 기록이 화면과 목표 입력란에 표시됨',
     }
   };
 
-  await page.locator('#importFile').setInputFiles({
+  await restoreBackup(page, {
     name: 'ui-restore-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
   });
 
@@ -346,12 +363,9 @@ test('JSON 복원으로 활성 프로젝트가 바뀌면 해당 프로젝트의 
     }
   };
 
-  await Promise.all([
-    page.waitForNavigation(),
-    page.locator('#importFile').setInputFiles({
-      name: 'project-switch-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
-    })
-  ]);
+  await restoreBackup(page, {
+    name: 'project-switch-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  }, { expectNavigation: true });
 
   await page.locator('#healthDate').evaluate((el, value) => {
     el.value = value;
@@ -612,4 +626,45 @@ test('누적 리포트 실행률은 기간별 제외 설정을 반영함', async
   const reportText = await page.locator('#dailyReportContent').innerText();
   expect(reportText).toMatch(/완료한 행동\s*\d+회/);
   expect(reportText).not.toContain('완료한 행동\n0회');
+});
+
+test('프로젝트 대시보드는 연도별 프로젝트 기간과 상태를 시각화함', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.projects.v1', JSON.stringify([
+      { id: 'project1', name: '2025 프로젝트', startDate: '2025-03-01', targetDate: '2025-08-31', description: '이전 연도' },
+      { id: 'project2', name: '2026 프로젝트', startDate: '2026-01-01', targetDate: '2026-12-31', description: '현재 연도' },
+      { id: 'project3', name: '기간 미설정 프로젝트', startDate: '', targetDate: '' }
+    ]));
+    localStorage.setItem('lifeos.activeProject.v1', 'project2');
+  });
+  await page.reload();
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#projectList')).toContainText('2025 프로젝트');
+  await expect(page.locator('#projectList')).toContainText('2026 프로젝트');
+  await expect(page.locator('#projectList')).toContainText('기간 미설정 프로젝트');
+  await expect(page.locator('#projectList .project-progress-track')).toHaveCount(3);
+  await page.locator('#projectYearFilter').selectOption('2025');
+  await expect(page.locator('#projectList')).toContainText('2025 프로젝트');
+  await expect(page.locator('#projectList')).not.toContainText('2026 프로젝트');
+  await expect(page.locator('#projectDashboardMetrics')).toContainText('1개');
+});
+
+test('백업 복원은 파일 형식 확인 후 명시적으로 복원할 때만 적용됨', async ({ page }) => {
+  const backup = {
+    app: 'LIFE OS', version: 3,
+    records: { '2026-10-20': { tasks: {}, metrics: { weight: 49 } } },
+    projects: [{ id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' }],
+    activeProjectId: 'project1',
+    projectData: { project1: { records: {}, settings: {}, groups: [] } }
+  };
+  await page.locator('#importFile').setInputFiles({
+    name: 'preview-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup))
+  });
+  await expect(page.locator('#backupFilePreview')).toContainText('preview-backup.json');
+  await expect(page.locator('#restoreJson')).toBeEnabled();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.records.v1.project1') || '{}')['2026-10-20'])).toBeUndefined();
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#restoreJson').click();
+  await expect(page.locator('#restoreJson')).toBeDisabled();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.records.v1.project1') || '{}')['2026-10-20'].metrics.weight)).toBe(49);
 });
