@@ -1005,7 +1005,7 @@ test('프로젝트 편집에서 오늘의 회고 선택지를 추가·수정·�
   await page.locator('[data-tab="today"]').click();
   await expect(page.locator('#reflectionWinOptions')).toContainText('수정한 성과 선택지');
   await expect(page.locator('#reflectionBlockerOptions')).toContainText('테스트 병목 선택지');
-  await expect(page.evaluate(() => localStorage.getItem('lifeos.reflectionOptions.project1.win.v1'))).not.toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('lifeos.reflectionOptions.project1.win.v1'))).not.toBeNull();
 });
 
 test('체크리스트 영역 이름 편집을 취소하면 기존 이름과 기록을 보존함', async ({ page }) => {
