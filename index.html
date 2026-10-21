@@ -70,6 +70,14 @@
 .calendar-cell-open{color:#8a8f98}
 @media(max-width:600px){.calendar-selection-card,.multi-task-calendar{width:100%;max-width:100%;overflow:hidden}.calendar-task-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.multi-calendar-scroll{width:100%;max-width:100%;overflow-x:auto}.multi-calendar-table{width:max-content}}
 
+
+.reflection-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px;margin:8px 0 12px}
+.reflection-options label{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1px solid var(--line,#d8dde5);border-radius:12px;background:var(--surface,#fff);min-width:0;overflow-wrap:anywhere}
+.reflection-options input{flex:0 0 auto;margin-top:3px}
+.custom-option-row{display:flex;gap:8px;margin:8px 0}
+.custom-option-row input{flex:1;min-width:0}
+@media(max-width:600px){.reflection-options{grid-template-columns:1fr}.custom-option-row{align-items:stretch}.custom-option-row .btn{white-space:nowrap}}
+
 </style>
 </head>
 <body>
@@ -102,8 +110,8 @@
 
 </section><div class="category-title"><div class="cat-icon">📝</div><div><h3>오늘의 회고</h3><p>병목과 내일의 개선 행동을 기록</p></div></div>
 <div class="fields">
-<div class="field full"><label>오늘 가장 중요한 성과</label><textarea id="reflectionWin" placeholder="작더라도 실제로 해낸 것"></textarea></div>
-<div class="field full"><label>오늘 가장 큰 병목</label><textarea id="reflectionBlocker" placeholder="무엇 때문에 실행이 막혔나?"></textarea></div>
+<div class="field full"><label>오늘 가장 중요한 성과</label><div id="reflectionWinOptions" class="reflection-options"><label><input type="checkbox" value="핵심 업무를 완료했어"> 핵심 업무 완료</label><label><input type="checkbox" value="운동 또는 건강 루틴을 지켰어"> 건강 루틴 실천</label><label><input type="checkbox" value="새로운 것을 배우거나 시도했어"> 학습·새로운 시도</label><label><input type="checkbox" value="어려운 일을 미루지 않고 시작했어"> 미루던 일 시작</label></div><div class="custom-option-row"><input id="reflectionWinCustom" placeholder="나만의 성과 선택지 추가"><button type="button" class="btn secondary" data-add-reflection-option="win">추가</button></div><textarea id="reflectionWin" placeholder="선택한 항목 외에 더 기록하고 싶다면 입력해 줘"></textarea></div>
+<div class="field full"><label>오늘 가장 큰 병목</label><div id="reflectionBlockerOptions" class="reflection-options"><label><input type="checkbox" value="시간이 부족했어"> 시간 부족</label><label><input type="checkbox" value="에너지가 부족하거나 피곤했어"> 에너지·피로</label><label><input type="checkbox" value="우선순위가 불명확했어"> 우선순위 불명확</label><label><input type="checkbox" value="외부 상황이나 다른 사람 때문에 막혔어"> 외부 요인</label><label><input type="checkbox" value="목표가 너무 크거나 다음 행동이 불명확했어"> 행동이 너무 크거나 불명확</label></div><div class="custom-option-row"><input id="reflectionBlockerCustom" placeholder="나만의 병목 선택지 추가"><button type="button" class="btn secondary" data-add-reflection-option="blocker">추가</button></div><textarea id="reflectionBlocker" placeholder="선택한 항목 외에 더 기록하고 싶다면 입력해 줘"></textarea></div>
 <div class="field full"><label>내일의 개선 행동 1개</label><input id="tomorrowAction" placeholder="예: 오전 9시에 잠재 고객 1명에게 제안 보내기"></div>
 </div></div>
 <div class="actions final-save"><button class="btn primary" id="saveBtn">✓ 오늘 기록 저장 · 전체 입력 한 번에 저장</button></div>
