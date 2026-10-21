@@ -504,7 +504,7 @@ test('누적 리포트 실행률은 기간별 제외 설정을 반영함', async
       ...[...document.querySelectorAll('[data-task]')].map(el => el.dataset.task)
     ])];
     const scopes = { marketing: [{ startDate: today, endDate: today }] };
-    const tasks = Object.fromEntries(taskIds.map(id => [id, true]));
+    const tasks = Object.fromEntries(taskIds.map(id => [id, id !== 'marketing']));
     localStorage.setItem('lifeos.checklist.taskScopes.v1.project1', JSON.stringify(scopes));
     localStorage.setItem('lifeos.records.v1.project1', JSON.stringify({
       [today]: { tasks, metrics: {}, reflection: { win: '', blocker: '', tomorrow: '' } }
