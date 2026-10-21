@@ -879,7 +879,7 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
   await expect(picker).toBeVisible();
   await expect(picker.locator('option:checked')).toHaveCount(3);
 
-  const recordKey = 'lifeos.records.v1.project1';
+  const recordKey = await page.evaluate(() => 'lifeos.records.v1.' + (localStorage.getItem('lifeos.activeProject.v1') || 'project1'));
   const syntheticRecords = {
     '2026-10-20': { tasks: { contact: true }, metrics: { weight: 50.2 }, reflection: { win: '합성 기록 유지 확인' } }
   };
