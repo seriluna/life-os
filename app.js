@@ -96,19 +96,20 @@ document.querySelectorAll("[data-task]").forEach(el=>el.addEventListener("change
 document.querySelectorAll("#categories input").forEach(el=>{if(el.type!=="checkbox"){const persistMetric=()=>{const rec=getRecord(currentDate);if(el.id==="m_weight")rec.metrics.weight=num(el.id);records[currentDate]=rec;if(!saveRecordsQuietly())return;if(el.id==="m_weight"&&window.lifeosSaveHealthLog)window.lifeosSaveHealthLog(true);renderStats(false);renderDailyReport()};el.addEventListener("input",persistMetric);el.addEventListener("change",persistMetric)}if(el.type==="checkbox"&&el.id.startsWith("forbid_"))el.addEventListener("change",()=>{const rec=getRecord(currentDate);rec.forbiddenChecks=rec.forbiddenChecks||{};rec.forbiddenChecks[el.id.slice(7)]=el.checked;records[currentDate]=rec;if(!saveRecordsQuietly())return;renderStats(false);renderDailyReport()});});document.querySelectorAll("#categories textarea").forEach(el=>el.addEventListener("input",()=>{const rec=getRecord(currentDate);rec.groupNotes=rec.groupNotes||{};const groupId=el.id.replace(/^note_/,"");rec.groupNotes[groupId]=el.value;records[currentDate]=rec;if(!saveRecordsQuietly())return;renderDailyReport()}));["reflectionWin","reflectionBlocker","tomorrowAction"].forEach(id=>{const el=$(id);if(el)el.addEventListener("input",()=>{saveCurrentQuiet();renderDailyReport()})});
 }
 function lifetimeAchievementSummary(){
- const today=dateNow();let total=0,recordDays=0;
+ const today=dateNow();let total=0;
  allDates().filter(d=>d<=today).forEach(date=>{
-  const record=records[date];if(!record)return;recordDays++;
-  groups.forEach(g=>g.tasks.forEach(([id])=>{
-   if(!taskExcludedOnDate(activeProjectId,id,date)&&record.tasks?.[id])total++;
-  }));
+  const record=records[date];if(!record)return;
+  // Count completed actions from historical records too, including tasks no longer in the current checklist.
+  Object.entries(record.tasks||{}).forEach(([id,completed])=>{
+   if(completed&&!taskExcludedOnDate(activeProjectId,id,date))total++;
+  });
  });
  const milestones=[1,10,25,50,100,250,500,1000,2500,5000];
  const achieved=milestones.filter(n=>total>=n);
  const next=milestones.find(n=>total<n)||Math.ceil((total+1)/1000)*1000;
  const milestone=achieved.length?achieved[achieved.length-1]:0;
  const message=total===0?"첫 체크를 완료하면 첫 성취가 시작돼.":total===1?"첫 성취를 만들었어! 이 한 번이 시작이야.":total<10?"좋아, 작은 성취가 쌓이고 있어. 다음 목표는 10회야.":total<50?"꾸준히 해낸 행동이 쌓이고 있어. 다음 성취까지 계속 가보자.":"이만큼 실행한 기록은 네가 직접 만든 결과야. 다음 목표도 한 걸음씩!";
- return {total,recordDays,milestone,next,message};
+ return {total,milestone,next,message};
 }
 function renderDailyReport(){
  const box=$("dailyReportContent");if(!box)return;
