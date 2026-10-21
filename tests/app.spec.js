@@ -852,3 +852,23 @@ test('체크인 자동 저장 실패를 알리고 기존 루틴 기록을 보존
   expect(preserved.reflection.win).toBe('기존 회고');
   expect(preserved.metrics.weight).toBe(51.2);
 });
+
+ 
+test('성과 리포트는 연속 기록과 별개로 프로젝트 전체 완료 행동 수를 축하함', async ({ page }) => {
+  const today = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  await page.evaluate((today) => {
+    const key = 'lifeos.records.v1.project1';
+    const previous = JSON.parse(localStorage.getItem(key) || '{}');
+    previous['2026-01-02'] = { tasks: { contact: true, marketing: true }, metrics: {}, reflection: {} };
+    previous[today] = { tasks: { contact: true }, metrics: {}, reflection: {} };
+    localStorage.setItem(key, JSON.stringify(previous));
+    records = previous;
+    renderDailyReport();
+  }, today);
+  await expect(page.locator('#dailyReportContent')).toContainText('프로젝트 누적 성취 · 3회 완료');
+  await expect(page.locator('#dailyReportContent')).toContainText('연속 기록 일수가 아니라 프로젝트 전체 기간');
+  await expect(page.locator('#dailyReportContent')).toContainText('다음 성취 기준은 10회');
+});
