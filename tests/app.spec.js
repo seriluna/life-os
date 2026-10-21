@@ -796,3 +796,19 @@ test('메인 화면과 성과 분석에서 요청된 누적 지표를 표시하�
   await expect(page.getByText('유료 고객 누적', { exact: true })).toHaveCount(0);
   await expect(page.getByText('사업 결제액 누적', { exact: true })).toHaveCount(0);
 });
+
+
+test('서비스워커가 HTML에서 참조하는 현재 스크립트 버전을 캐싱함', async ({ page }) => {
+  const scriptVersions = await page.evaluate(() => ({
+    app: document.querySelector('script[src^="app.js"]')?.getAttribute('src'),
+    health: document.querySelector('script[src^="health-log.js"]')?.getAttribute('src')
+  }));
+  const serviceWorker = await page.evaluate(async () => {
+    const response = await fetch('./sw.js', { cache: 'no-store' });
+    return response.text();
+  });
+  expect(scriptVersions.app).toBe('app.js?v=58');
+  expect(scriptVersions.health).toBe('health-log.js?v=28');
+  expect(serviceWorker).toContain('"./app.js?v=58"');
+  expect(serviceWorker).toContain('"./health-log.js?v=28"');
+});
