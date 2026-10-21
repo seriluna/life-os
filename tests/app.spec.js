@@ -913,6 +913,39 @@ test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 �
   await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(count);
 });
 
+test('달력 선택 설정은 프로젝트마다 독립적으로 저장됨', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.projects.v1', JSON.stringify([
+      { id: 'project1', name: '프로젝트 1', startDate: '', targetDate: '' },
+      { id: 'project2', name: '프로젝트 2', startDate: '', targetDate: '' }
+    ]));
+    localStorage.setItem('lifeos.activeProject.v1', 'project1');
+    localStorage.removeItem('lifeos.calendarTasks.v1.project1');
+    localStorage.removeItem('lifeos.calendarTasks.v1.project2');
+    localStorage.removeItem('lifeos.calendarTasks.v1');
+  });
+  await page.reload();
+  await page.locator('[data-tab="insights"]').click();
+  const project1Options = page.locator('#calendarTaskPicker input[data-calendar-task]');
+  await expect(project1Options.first()).toBeVisible();
+  await project1Options.first().check();
+  const project1Selection = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'));
+  expect(project1Selection).toHaveLength(1);
+
+  await page.locator('#projectPicker').selectOption('project2');
+  await expect(page.locator('#projectPicker')).toHaveValue('project2');
+  await page.locator('[data-tab="insights"]').click();
+  const project2Options = page.locator('#calendarTaskPicker input[data-calendar-task]');
+  await expect(project2Options.first()).toBeVisible();
+  await project2Options.first().check();
+  const result = await page.evaluate(() => ({
+    project1: JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'),
+    project2: JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project2') || '[]')
+  }));
+  expect(result.project1).toEqual(project1Selection);
+  expect(result.project2).toHaveLength(1);
+});
+ 
 test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저장하고 복원함', async ({ page }) => {
   await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(0).check();
   await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(1).check();
