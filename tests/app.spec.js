@@ -489,7 +489,7 @@ test('실행 항목 추가도 선택한 날짜 범위에만 표시되고 저장�
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('선택한 날짜만')).toBeVisible();
   await expect(dialog.getByText('직접 지정한 기간만')).toBeVisible();
-  await expect(dialog.getByText('프로젝트 전체 기간')).toBeVisible();
+  await expect(dialog.getByText('프로젝트 전체 기간', { exact: true })).toBeVisible();
   await dialog.locator('[name="scopeMode"][value="range"]').check();
   await dialog.locator('#taskScopeStart').fill('2026-10-01');
   await dialog.locator('#taskScopeEnd').fill('2026-10-10');
