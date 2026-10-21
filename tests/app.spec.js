@@ -6,7 +6,13 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
+async function openDataManagement(page) {
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator('#dataView')).toBeVisible();
+}
+
 async function restoreBackup(page, file, { expectError = false, expectNavigation = false } = {}) {
+  await openDataManagement(page);
   await page.locator('#importFile').setInputFiles(file);
   await expect(page.locator('#backupFilePreview')).toContainText('전체 백업 형식 확인 완료');
   const dialogTypes = [];
@@ -696,6 +702,7 @@ test('목표 설정은 일일 기록 저장과 분리되어 날짜가 바뀌어�
 
 
 test('프로젝트 대시보드는 기간 시각화와 연도별 필터를 제공함', async ({ page }) => {
+  await openDataManagement(page);
   await page.evaluate(() => {
     localStorage.setItem('lifeos.projects.v1', JSON.stringify([
       { id: 'project1', name: '2025-26 프로젝트', description: '연도 필터 테스트', startDate: '2025-11-01', targetDate: '2026-02-15' },
@@ -724,6 +731,7 @@ test('프로젝트 대시보드는 기간 시각화와 연도별 필터를 제�
 });
 
 test('목표 설정은 접을 수 있고 저장 동작을 유지함', async ({ page }) => {
+  await openDataManagement(page);
   const panel = page.locator('#goalSettingsPanel');
   await expect(panel).toBeVisible();
   await expect(panel).not.toHaveAttribute('open', '');
@@ -739,6 +747,7 @@ test('목표 설정은 접을 수 있고 저장 동작을 유지함', async ({ p
 });
 
 test('전체 백업 파일은 먼저 미리보기하고 취소할 수 있음', async ({ page }) => {
+  await openDataManagement(page);
   const backup = {
     app: 'LIFE OS', version: 3,
     records: { '2026-10-20': { tasks: {}, metrics: {} } },
