@@ -111,6 +111,7 @@ test('날짜를 바꿔도 건강 기록 카드가 식단 영역에 유지됨', a
   const healthCard = page.locator('#healthLogCard');
   await expect(healthCard).toBeVisible();
 
+  await page.locator('[data-tab="today"]').click();
   await page.locator('#recordDate').fill('2026-10-15');
   await page.locator('#recordDate').dispatchEvent('change');
 
@@ -477,6 +478,68 @@ test('JSON 백업에 기간별 실행 항목 수정·삭제 설정이 포함됨'
   const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
   expect(backup.projectData.project1.labelHistory.contact.changes[0].label).toBe('기간 한정 연락');
   expect(backup.projectData.project1.taskScopes.marketing[0].startDate).toBe('2026-10-05');
+});
+
+
+test('실행 항목 추가도 선택한 날짜 범위에만 표시되고 저장됨', async ({ page }) => {
+  await page.locator('[data-tab="data"]').click();
+  await page.locator('#addActionName0').fill('기간 한정 실행 항목');
+  await page.locator('[data-add-action="0"]').click();
+
+  const dialog = page.locator('#taskScopeDialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('선택한 날짜만')).toBeVisible();
+  await expect(dialog.getByText('직접 지정한 기간만')).toBeVisible();
+  await expect(dialog.getByText('프로젝트 전체 기간', { exact: true })).toBeVisible();
+  await dialog.locator('[name="scopeMode"][value="range"]').check();
+  await dialog.locator('#taskScopeStart').fill('2026-10-01');
+  await dialog.locator('#taskScopeEnd').fill('2026-10-10');
+  await dialog.locator('button[type="submit"]').click();
+
+  const saved = await page.evaluate(() => {
+    const groups = JSON.parse(localStorage.getItem('lifeos.checklist.groups.v1.project1') || '[]');
+    const active = JSON.parse(localStorage.getItem('lifeos.checklist.taskActiveScopes.v1.project1') || '{}');
+    const task = groups.flatMap(g => g.tasks).find(t => t[1] === '기간 한정 실행 항목');
+    return { task, scope: task ? active[task[0]] : null };
+  });
+  expect(saved.task).toBeTruthy();
+  expect(saved.scope).toEqual([{ startDate: '2026-10-01', endDate: '2026-10-10' }]);
+
+  await page.locator('[data-tab="today"]').click();
+  await page.locator('#recordDate').fill('2026-10-15');
+  await page.locator('#recordDate').dispatchEvent('change');
+  await expect(page.locator('[data-task="' + saved.task[0] + '"]')).toHaveCount(0);
+  await page.locator('#recordDate').fill('2026-10-05');
+  await page.locator('#recordDate').dispatchEvent('change');
+  await expect(page.locator('[data-task="' + saved.task[0] + '"]')).toBeVisible();
+});
+
+test('JSON 백업과 복원은 실행 항목 추가 범위도 보존함', async ({ page }) => {
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos.checklist.taskActiveScopes.v1.project1', JSON.stringify({
+      scopedTask: [{ startDate: '2026-10-01', endDate: '2026-10-10' }]
+    }));
+  });
+  await page.locator('[data-tab="data"]').click();
+  await page.evaluate(() => {
+    window.__exportBlobText = null;
+    const originalCreateObjectURL = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = blob => {
+      window.__exportBlobText = blob.text();
+      return originalCreateObjectURL(blob);
+    };
+  });
+  await page.locator('#exportJson').click();
+  const backup = await page.evaluate(async () => JSON.parse(await window.__exportBlobText));
+  expect(backup.projectData.project1.taskActiveScopes.scopedTask[0].startDate).toBe('2026-10-01');
+
+  await page.locator('#importFile').setInputFiles({
+    name: 'scoped-add-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup))
+  });
+  const restored = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.checklist.taskActiveScopes.v1.project1') || '{}'));
+  expect(restored.scopedTask[0].endDate).toBe('2026-10-10');
 });
 
 test('같은 프로젝트에 JSON 복원하면 체크리스트 화면도 즉시 갱신됨', async ({ page }) => {
