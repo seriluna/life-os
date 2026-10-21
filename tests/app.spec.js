@@ -905,3 +905,17 @@ test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 �
   await page.reload();
   await expect(page.locator('#calendarTaskPicker input:checked')).toHaveCount(23);
 });
+
+test('오늘의 회고는 여러 선택지와 사용자 정의 선택지를 저장하고 복원함', async ({ page }) => {
+  await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(0).check();
+  await page.locator('#reflectionWinOptions input[type="checkbox"]').nth(1).check();
+  await page.locator('#reflectionBlockerOptions input[type="checkbox"]').nth(2).check();
+  await page.locator('#reflectionWinCustom').fill('고객 인터뷰 완료');
+  await page.locator('[data-add-reflection-option="win"]').click();
+  await expect(page.locator('#reflectionWinOptions')).toContainText('고객 인터뷰 완료');
+  await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
+  await page.reload();
+  await expect(page.locator('#reflectionWinOptions')).toContainText('고객 인터뷰 완료');
+  await expect(page.locator('#reflectionWinOptions input:checked')).toHaveCount(3);
+  await expect(page.locator('#reflectionBlockerOptions input:checked')).toHaveCount(1);
+});
