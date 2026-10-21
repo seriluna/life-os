@@ -389,6 +389,7 @@ test('식단·몸무게 통계에서 세 가지 보기 모드를 제공함', asy
 test('실행 항목 삭제는 범위를 선택하면 즉시 저장됨', async ({ page }) => {
   await page.locator('[data-tab="data"]').click();
   const deleteButton = page.locator('#groupEditorList [data-delete-action]').first();
+  const beforeCount = await page.locator('#groupEditorList [data-delete-action]').count();
   await expect(deleteButton).toBeVisible();
   await deleteButton.click();
 
@@ -411,7 +412,7 @@ test('실행 항목 삭제는 범위를 선택하면 즉시 저장됨', async ({
   expect(ranges[0].startDate).toBe(ranges[0].endDate);
   await page.reload();
   await page.locator('[data-tab="data"]').click();
-  await expect(page.locator('#groupEditorList [data-delete-action]')).toHaveCount(23);
+  await expect(page.locator('#groupEditorList [data-delete-action]')).toHaveCount(beforeCount);
 });
 
 test('실행 항목 이름 수정은 지정한 기간에만 적용하고 즉시 저장됨', async ({ page }) => {
