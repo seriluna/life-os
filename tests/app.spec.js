@@ -893,7 +893,7 @@ test('메인 통계 선택은 새로고침 후 유지되고 기존 기록을 변
 
   await page.reload();
   await expect(page.locator('#homeStatsPicker option:checked')).toHaveCount(1);
-  await expect(page.locator('#homeStatsPicker option:checked')).toHaveValue('streak');
+  await expect.poll(() => page.locator('#homeStatsPicker').evaluate(el => Array.from(el.selectedOptions).map(option => option.value))).toEqual(['streak']);
   await expect(page.locator('[data-home-stat="streak"]')).toBeVisible();
   await expect(page.locator('[data-home-stat="doneCount"]')).toBeHidden();
   const savedRecords = await page.evaluate(key => JSON.parse(localStorage.getItem(key) || '{}'), recordKey);
