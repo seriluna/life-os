@@ -928,6 +928,7 @@ test('달력 선택 설정은 프로젝트마다 독립적으로 저장됨', asy
   await page.locator('[data-tab="insights"]').click();
   const project1Options = page.locator('#calendarTaskPicker input[data-calendar-task]');
   await expect(project1Options.first()).toBeVisible();
+  await page.locator('#calendarClearAll').click();
   await project1Options.first().check();
   const project1Selection = await page.evaluate(() => JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'));
   expect(project1Selection).toHaveLength(1);
@@ -937,6 +938,7 @@ test('달력 선택 설정은 프로젝트마다 독립적으로 저장됨', asy
   await page.locator('[data-tab="insights"]').click();
   const project2Options = page.locator('#calendarTaskPicker input[data-calendar-task]');
   await expect(project2Options.first()).toBeVisible();
+  await page.locator('#calendarClearAll').click();
   await project2Options.first().check();
   const result = await page.evaluate(() => ({
     project1: JSON.parse(localStorage.getItem('lifeos.calendarTasks.v1.project1') || '[]'),
