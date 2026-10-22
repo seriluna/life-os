@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "check:js": "node --check app.js && node --check health-log.js",
+    "start": "node preview-server.js",
+    "check:js": "node --check app.js && node --check health-log.js && node --check preview-server.js",
     "test": "playwright test"
   },
   "devDependencies": {
