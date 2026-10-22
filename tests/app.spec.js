@@ -1086,3 +1086,14 @@ test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 
   expect(preserved).toEqual({ tasks: { contact: true }, metrics: { weight: 52.1 }, reflection: { win: '합성 테스트 기록' } });
   expect(beforeGroups === null || Array.isArray(beforeGroups)).toBe(true);
 });
+
+test('메인 화면 빠른 기록 링크가 실제 기록 영역으로 연결됨', async ({ page }) => {
+  const actions = page.locator('.home-quick-actions .quick-action');
+  await expect(actions).toHaveCount(3);
+  await expect(actions.nth(0)).toHaveAttribute('href', '#categories');
+  await expect(actions.nth(1)).toHaveAttribute('href', '#healthLogCard');
+  await expect(actions.nth(2)).toHaveAttribute('href', '#reflectionQuestionFields');
+  for (const target of ['categories', 'healthLogCard', 'reflectionQuestionFields']) {
+    await expect(page.locator('#' + target)).toHaveCount(1);
+  }
+});
