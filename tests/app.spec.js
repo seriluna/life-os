@@ -807,9 +807,9 @@ test('서비스워커가 HTML에서 참조하는 현재 스크립트 버전을 �
     const response = await fetch('./sw.js', { cache: 'no-store' });
     return response.text();
   });
-  expect(scriptVersions.app).toBe('app.js?v=62');
+  expect(scriptVersions.app).toBe('app.js?v=63');
   expect(scriptVersions.health).toBe('health-log.js?v=29');
-  expect(serviceWorker).toContain('"./app.js?v=62"');
+  expect(serviceWorker).toContain('"./app.js?v=63"');
   expect(serviceWorker).toContain('"./health-log.js?v=29"');
 });
 
