@@ -1087,6 +1087,15 @@ test('체크리스트 편집은 저장 전 변경을 반영하지 않고 저장 
   expect(beforeGroups === null || Array.isArray(beforeGroups)).toBe(true);
 });
 
+test('오늘의 회고에서 질문 편집 버튼으로 편집기로 바로 이동함', async ({ page }) => {
+  await expect(page.locator('#editReflectionQuestions')).toBeVisible();
+  await page.locator('#editReflectionQuestions').click();
+  await expect(page.locator('#dataView')).toBeVisible();
+  await expect(page.locator('#projectEditor')).toBeVisible();
+  await expect(page.locator('#peReflectionQuestions')).toBeVisible();
+  await expect(page.locator('#peReflectionAdd')).toBeVisible();
+});
+
 test('메인 화면 빠른 기록 링크가 실제 기록 영역으로 연결됨', async ({ page }) => {
   const actions = page.locator('.home-quick-actions .quick-action');
   await expect(actions).toHaveCount(3);
