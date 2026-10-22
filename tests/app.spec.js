@@ -897,6 +897,29 @@ test('메인 통계는 데이터 관리에서 선택하고 메인 화면에 추�
   await expect(page.locator('#homeTrendCharts .home-trend-card')).toHaveCount(2);
 });
 
+test('체중 추세는 체크인 값이 비어 있어도 건강 기록의 체중을 표시함', async ({ page }) => {
+  const date = await page.locator('#healthDate').inputValue();
+  await page.evaluate((date) => {
+    const key = 'lifeos.records.v1.project1';
+    const records = JSON.parse(localStorage.getItem(key) || '{}');
+    records[date] = {
+      ...(records[date] || {}),
+      tasks: records[date]?.tasks || {},
+      metrics: { ...(records[date]?.metrics || {}), weight: '' },
+      reflection: records[date]?.reflection || {}
+    };
+    localStorage.setItem(key, JSON.stringify(records));
+    localStorage.setItem('lifeos.health.logs.v1.project1', JSON.stringify({
+      [date]: { date, weight: 52.4, meals: {}, dailyTotals: {} }
+    }));
+  }, date);
+  await page.reload();
+  await page.locator('[data-tab="data"]').click();
+  await page.locator('#homeStatsPicker').selectOption(['weight']);
+  await page.locator('[data-tab="today"]').click();
+  await expect(page.locator('#homeTrendCharts .home-trend-card')).toContainText('52.4');
+});
+
 test('기간 달력은 항목별 선택과 전체 선택 및 전체 해제를 지원함', async ({ page }) => {
   await page.locator('[data-tab="insights"]').click();
   await expect(page.locator('[data-tab="insights"]')).toHaveClass(/active/);
