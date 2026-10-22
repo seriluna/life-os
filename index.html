@@ -149,6 +149,11 @@
 @media(prefers-reduced-motion:reduce){
   .nav button,.quick-action{transition:none}
 }
+
+.reflection-heading{align-items:center;flex-wrap:wrap}
+.reflection-heading-copy{flex:1;min-width:120px}
+.reflection-edit-button{margin-left:auto;white-space:nowrap;min-height:38px;padding:8px 11px;font-size:12px}
+@media(max-width:420px){.reflection-edit-button{font-size:11px;padding:7px 9px}}
 </style>
 </head>
 <body>
@@ -179,7 +184,7 @@
 <div class="actions"><button class="btn secondary" id="exportHealthCsv" type="button">식단·몸무게 CSV 다운로드</button></div>
 
 
-</section><div class="category-title"><div class="cat-icon">📝</div><div><h3>오늘의 회고</h3><p>질문별로 자유롭게 작성해. 질문 구성은 데이터 관리에서 수정할 수 있어.</p></div></div><div class="fields" id="reflectionQuestionFields"></div>
+</section><div class="category-title reflection-heading"><div class="cat-icon">📝</div><div class="reflection-heading-copy"><h3>오늘의 회고</h3><p>질문별로 자유롭게 작성해. 질문은 언제든 직접 수정할 수 있어.</p></div><button type="button" class="btn secondary reflection-edit-button" id="editReflectionQuestions">✏️ 질문 편집</button></div><div class="fields" id="reflectionQuestionFields"></div>
 <div class="actions final-save"><button class="btn primary" id="saveBtn">✓ 오늘 기록 저장 · 전체 입력 한 번에 저장</button></div>
 <p class="hint">자동 저장은 이 기기의 브라우저에 기록돼. 기기 변경·브라우저 데이터 삭제에 대비해 정기적으로 백업 파일을 내보내 줘.</p>
 </main>
