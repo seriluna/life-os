@@ -1,0 +1,29 @@
+name: Staging preview artifact
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Package static preview
+        run: |
+          mkdir -p preview
+          cp index.html app.js health-log.js sw.js manifest.json icon-192.png icon-512.png preview/
+          cd preview
+          zip -r ../life-os-staging-preview.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: life-os-staging-preview
+          path: life-os-staging-preview.zip
+          if-no-files-found: error
+          retention-days: 7
