@@ -154,6 +154,13 @@
 .reflection-heading-copy{flex:1;min-width:120px}
 .reflection-edit-button{margin-left:auto;white-space:nowrap;min-height:38px;padding:8px 11px;font-size:12px}
 @media(max-width:420px){.reflection-edit-button{font-size:11px;padding:7px 9px}}
+
+/* Reflection answers are plain text fields, never checklist items. */
+#reflectionQuestionFields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;width:100%;min-width:0}
+#reflectionQuestionFields .reflection-question-field{display:block;width:100%;min-width:0;grid-column:1/-1}
+#reflectionQuestionFields input[type="checkbox"],#reflectionQuestionFields .task input[type="checkbox"]{display:none!important}
+#reflectionQuestionFields textarea{display:block;width:100%;min-width:0;min-height:110px;writing-mode:horizontal-tb;overflow-wrap:anywhere}
+#reflectionQuestionFields label{display:block;writing-mode:horizontal-tb;overflow-wrap:anywhere;margin-bottom:7px}
 </style>
 </head>
 <body>
@@ -231,5 +238,5 @@
 <div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
 </div>
 <div class="bottom hidden"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button></div></div>
-<script src="app.js?v=63"></script><script src="health-log.js?v=29"></script>
+<script src="app.js?v=64"></script><script src="health-log.js?v=29"></script>
 </body></html>
