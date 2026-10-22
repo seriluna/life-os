@@ -79,6 +79,76 @@
 .custom-option-row input{flex:1;min-width:0}
 @media(max-width:600px){.reflection-options{grid-template-columns:1fr}.custom-option-row{align-items:stretch}.custom-option-row .btn{white-space:nowrap}}
 
+
+/* Home screen refresh: clearer hierarchy, compact mobile dashboard, and visible quick actions */
+.top{padding:18px 2px 12px;align-items:center}
+.brand{font-size:25px;letter-spacing:-.07em}
+.date-chip{font-weight:650}
+.hero{border-radius:26px;padding:21px;background:linear-gradient(145deg,#18251f 0%,#203b2d 100%);box-shadow:0 12px 30px rgba(24,37,31,.12)}
+.hero .eyebrow{color:#b8e0c5;font-size:10px;letter-spacing:.14em}
+.hero h1{font-size:clamp(23px,5vw,29px);line-height:1.2;margin:9px 0 8px;max-width:18em}
+.hero>p{font-size:13px;line-height:1.6;max-width:34em}
+.hero-row{gap:16px;margin-top:18px;align-items:flex-start}
+.ring{width:78px;height:78px;background:conic-gradient(#f3c969 var(--pct,0%),#405247 0);box-shadow:0 0 0 5px rgba(255,255,255,.035);flex-shrink:0}
+.ring:before{width:62px;height:62px}
+.ring strong{font-size:16px}
+.hero-summary{flex:1;min-width:0}
+.daily-motivation{padding:0 0 10px}
+.daily-motivation span{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#c2d4c8}
+.daily-motivation strong{display:block;font-size:13px;line-height:1.55;margin-top:4px;color:#fff}
+.hero-stats{gap:7px;margin-top:5px}
+.hero-stat{padding:9px 10px;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.08);border-radius:12px;min-width:0}
+.hero-stat small{font-size:10px;line-height:1.35;color:#c5d4ca}
+.hero-stat strong{font-size:17px;line-height:1.3;margin-top:4px;overflow-wrap:anywhere}
+.home-trend-charts{gap:8px;margin-top:12px}
+.home-trend-card{border-radius:14px;padding:11px;border-color:rgba(255,255,255,.15);box-shadow:none}
+.nav{position:sticky;top:0;z-index:15;gap:5px;margin:12px -3px 14px;padding:5px;background:rgba(232,237,230,.96);border:1px solid rgba(226,232,224,.85);backdrop-filter:blur(12px)}
+.nav button{min-height:42px;padding:10px 5px;font-size:12px;transition:background .15s ease,color .15s ease}
+.nav button.active{background:#fff;color:#1d5b3a;box-shadow:0 2px 8px rgba(24,37,31,.08)}
+.home-quick-actions{margin:0 0 18px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.quick-actions-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 2px 11px}
+.quick-actions-heading span{font-size:9px;font-weight:850;letter-spacing:.13em;color:var(--green)}
+.quick-actions-heading strong{font-size:14px;letter-spacing:-.02em}
+.quick-actions-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.quick-action{display:flex;min-width:0;min-height:70px;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:7px;padding:10px;border:1px solid #e4ebe3;border-radius:13px;background:#f8faf7;color:var(--ink);text-decoration:none;font-size:12px;font-weight:750;transition:transform .15s ease,border-color .15s ease,background .15s ease}
+.quick-action>span:first-child{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;background:#e3f2e8;color:#236746;font-size:15px}
+.quick-action .quick-arrow{align-self:flex-end;color:#748379;font-size:13px;line-height:1}
+.quick-action:focus-visible{outline:3px solid #85b99a;outline-offset:2px}
+.quick-action:hover{border-color:#b6d7c0;background:#f1f8f2}
+.project-timeline-strip{border-radius:15px;margin-bottom:14px}
+.section-head{margin:20px 2px 10px;gap:10px}
+.card{border-radius:17px;box-shadow:0 4px 18px rgba(24,37,31,.045)}
+.category-title{gap:11px}
+.cat-icon{border-radius:13px}
+#todayView{scroll-margin-top:10px}
+#categories,#healthLogCard,#reflectionQuestionFields,#saveBtn{scroll-margin-top:82px}
+@media(max-width:600px){
+  .app{padding:0 13px calc(28px + env(safe-area-inset-bottom))}
+  .top{padding:15px 1px 11px;gap:8px}
+  .brand{font-size:23px}
+  .top-controls{gap:6px}
+  .date-chip{padding:6px 8px;font-size:11px}
+  .hero{padding:18px 16px;border-radius:22px}
+  .hero h1{font-size:24px}
+  .hero-row{gap:12px;margin-top:16px}
+  .ring{width:68px;height:68px}
+  .ring:before{width:54px;height:54px}
+  .ring strong{font-size:14px}
+  .hero-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .hero-stat{padding:8px}
+  .hero-stat strong{font-size:16px}
+  .home-trend-charts{grid-template-columns:1fr}
+  .home-quick-actions{padding:12px;margin-bottom:16px}
+  .quick-actions-heading{align-items:flex-start;flex-direction:column;gap:3px}
+  .quick-actions-links{gap:6px}
+  .quick-action{min-height:68px;padding:8px;font-size:11px;border-radius:11px}
+  .quick-action>span:first-child{width:23px;height:23px}
+  .nav{margin:10px -1px 13px}
+  .nav button{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav button,.quick-action{transition:none}
+}
 </style>
 </head>
 <body>
