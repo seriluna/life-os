@@ -807,9 +807,9 @@ test('서비스워커가 HTML에서 참조하는 현재 스크립트 버전을 �
     const response = await fetch('./sw.js', { cache: 'no-store' });
     return response.text();
   });
-  expect(scriptVersions.app).toBe('app.js?v=62');
+  expect(scriptVersions.app).toBe('app.js?v=63');
   expect(scriptVersions.health).toBe('health-log.js?v=29');
-  expect(serviceWorker).toContain('"./app.js?v=62"');
+  expect(serviceWorker).toContain('"./app.js?v=63"');
   expect(serviceWorker).toContain('"./health-log.js?v=29"');
 });
 
@@ -988,12 +988,12 @@ test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유�
   expect(saved[date].meals.breakfast.food).toBe('테스트 계란');
   await page.reload();
   await page.locator('[data-tab="today"]').click();
-  // JSON import targets its own date; reload defaults the form to today.
+  // JSON import targets its own date; select the same date used in the imported JSON.
   // Dispatch the date change directly to avoid native date-input picker timing differences.
-  await page.locator('#healthDate').evaluate((el) => {
-    el.value = '2026-10-21';
+  await page.locator('#healthDate').evaluate((el, value) => {
+    el.value = value;
     el.dispatchEvent(new Event('change', { bubbles: true }));
-  });
+  }, date);
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('테스트 계란');
 });
 
