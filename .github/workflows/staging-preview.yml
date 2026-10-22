@@ -1,4 +1,4 @@
-name: Staging preview artifact
+name: Staging preview and browser tests
 
 on:
   push:
@@ -9,7 +9,27 @@ permissions:
   contents: read
 
 jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: npm run check:js
+      - name: Install dependencies
+        run: npm install
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run browser tests
+        run: npm test
+
   package-preview:
+    needs: browser-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
