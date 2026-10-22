@@ -959,8 +959,12 @@ test('식단 JSON 적용 즉시 자동 저장되고 새로고침 후에도 유�
   expect(saved['2026-10-21'].meals.breakfast.food).toBe('테스트 계란');
   await page.reload();
   await page.locator('[data-tab="today"]').click();
-  // JSON import targets its own date; after reload the form defaults to today.
-  await page.locator('#healthDate').fill('2026-10-21');
+  // JSON import targets its own date; reload defaults the form to today.
+  // Dispatch the date change directly to avoid native date-input picker timing differences.
+  await page.locator('#healthDate').evaluate((el) => {
+    el.value = '2026-10-21';
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
   await expect(page.locator('#hl-breakfast-food')).toHaveValue('테스트 계란');
 });
 
