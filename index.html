@@ -154,6 +154,13 @@
 .reflection-heading-copy{flex:1;min-width:120px}
 .reflection-edit-button{margin-left:auto;white-space:nowrap;min-height:38px;padding:8px 11px;font-size:12px}
 @media(max-width:420px){.reflection-edit-button{font-size:11px;padding:7px 9px}}
+
+/* 회고는 체크형 UI가 아닌 자유 입력 전용 */
+#reflectionQuestionFields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+#reflectionQuestionFields .reflection-question-field{display:block;width:100%;min-width:0;max-width:100%;margin:0;padding:0}
+#reflectionQuestionFields .reflection-question-field label{display:block;width:100%;margin:0 0 7px;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;writing-mode:horizontal-tb}
+#reflectionQuestionFields .reflection-question-field input[type="checkbox"],#reflectionQuestionFields .reflection-question-field input[type="radio"]{display:none!important}
+#reflectionQuestionFields .reflection-question-field textarea{display:block;width:100%;min-width:0;max-width:100%;min-height:120px;resize:vertical;writing-mode:horizontal-tb}
 </style>
 </head>
 <body>
@@ -231,5 +238,5 @@
 <div class="footer">LIFE OS MVP · 개인 검증용 0.1 · 기록은 매일, 결과는 매주</div>
 </div>
 <div class="bottom hidden"><div class="bottom-inner"><button class="btn secondary" id="bottomInsights">📊 성과 보기</button></div></div>
-<script src="app.js?v=63"></script><script src="health-log.js?v=29"></script>
+<script src="app.js?v=64"></script><script src="health-log.js?v=29"></script>
 </body></html>
